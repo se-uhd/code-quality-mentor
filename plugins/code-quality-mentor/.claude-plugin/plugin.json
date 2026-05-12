@@ -1,6 +1,6 @@
 {
   "name": "code-quality-mentor",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Turn PMD warnings into a personalized learning plan. The /code-quality-mentor:scan command runs PMD across a Git repository, attributes each warning to its author via git blame, lets you pick one developer, and synthesizes a focused LEARNING_PLAN.md with concept explanations, refactor sketches of the author's actual flagged code, and pointers to canonical references.",
   "license": "MIT",
   "author": {
