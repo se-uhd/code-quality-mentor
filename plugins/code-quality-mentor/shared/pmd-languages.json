@@ -1,0 +1,99 @@
+{
+  "_comment": "Keyed by GitHub Linguist canonical language name so the output of `github-linguist --json` joins directly. `aliases` lists alternate names that have been observed in older Linguist or in enry. Verified against PMD 7.24.0 JAR contents: every `default_ruleset` path was confirmed shipped in the relevant `pmd-<lang>.jar`. Java and Apex use their bundled `rulesets/<lang>/quickstart.xml`; other languages use a `bestpractices + errorprone` pair as the most actionable default for learning, except Visualforce (security only) and XSL (codestyle only), which have narrower coverage upstream. PMD also parses many other languages for CPD (copy-paste detection) only — C/C++, C#, CSS, Dart, Fortran, Gherkin, Go, Groovy, Julia, Lua, Matlab, Objective-C, Perl, PHP, Python, Ruby, Rust, T-SQL, Coco. These ship no rule-based rulesets and are therefore not actionable by this plugin.",
+  "Apex": {
+    "aliases": [],
+    "pmd_language_id": "apex",
+    "default_ruleset": "rulesets/apex/quickstart.xml",
+    "pmd_docs_base_url": "https://docs.pmd-code.org/latest/pmd_rules_apex.html"
+  },
+  "HTML": {
+    "aliases": [],
+    "pmd_language_id": "html",
+    "default_ruleset": "category/html/bestpractices.xml,category/html/errorprone.xml",
+    "pmd_docs_base_url": "https://docs.pmd-code.org/latest/pmd_rules_html.html"
+  },
+  "Java": {
+    "aliases": [],
+    "pmd_language_id": "java",
+    "default_ruleset": "rulesets/java/quickstart.xml",
+    "pmd_docs_base_url": "https://docs.pmd-code.org/latest/pmd_rules_java.html"
+  },
+  "Java Server Pages": {
+    "aliases": ["JSP"],
+    "pmd_language_id": "jsp",
+    "default_ruleset": "category/jsp/bestpractices.xml,category/jsp/errorprone.xml",
+    "pmd_docs_base_url": "https://docs.pmd-code.org/latest/pmd_rules_jsp.html"
+  },
+  "JavaScript": {
+    "aliases": ["ECMAScript"],
+    "pmd_language_id": "ecmascript",
+    "default_ruleset": "category/ecmascript/bestpractices.xml,category/ecmascript/errorprone.xml",
+    "pmd_docs_base_url": "https://docs.pmd-code.org/latest/pmd_rules_ecmascript.html"
+  },
+  "Kotlin": {
+    "aliases": [],
+    "pmd_language_id": "kotlin",
+    "default_ruleset": "category/kotlin/bestpractices.xml,category/kotlin/errorprone.xml",
+    "pmd_docs_base_url": "https://docs.pmd-code.org/latest/pmd_rules_kotlin.html"
+  },
+  "Modelica": {
+    "aliases": [],
+    "pmd_language_id": "modelica",
+    "default_ruleset": "category/modelica/bestpractices.xml",
+    "pmd_docs_base_url": "https://docs.pmd-code.org/latest/pmd_rules_modelica.html"
+  },
+  "PLSQL": {
+    "aliases": ["PL/SQL"],
+    "pmd_language_id": "plsql",
+    "default_ruleset": "category/plsql/bestpractices.xml,category/plsql/errorprone.xml",
+    "pmd_docs_base_url": "https://docs.pmd-code.org/latest/pmd_rules_plsql.html"
+  },
+  "Maven POM": {
+    "aliases": [],
+    "pmd_language_id": "pom",
+    "default_ruleset": "category/pom/errorprone.xml",
+    "pmd_docs_base_url": "https://docs.pmd-code.org/latest/pmd_rules_pom.html"
+  },
+  "Scala": {
+    "aliases": [],
+    "pmd_language_id": "scala",
+    "default_ruleset": "category/scala/bestpractices.xml",
+    "pmd_docs_base_url": "https://docs.pmd-code.org/latest/pmd_rules_scala.html"
+  },
+  "Swift": {
+    "aliases": [],
+    "pmd_language_id": "swift",
+    "default_ruleset": "category/swift/bestpractices.xml,category/swift/errorprone.xml",
+    "pmd_docs_base_url": "https://docs.pmd-code.org/latest/pmd_rules_swift.html"
+  },
+  "Velocity Template Language": {
+    "aliases": ["VTL", "Velocity"],
+    "pmd_language_id": "velocity",
+    "default_ruleset": "category/velocity/bestpractices.xml,category/velocity/errorprone.xml",
+    "pmd_docs_base_url": "https://docs.pmd-code.org/latest/pmd_rules_velocity.html"
+  },
+  "Visualforce": {
+    "aliases": [],
+    "pmd_language_id": "visualforce",
+    "default_ruleset": "category/visualforce/security.xml",
+    "pmd_docs_base_url": "https://docs.pmd-code.org/latest/pmd_rules_visualforce.html"
+  },
+  "WSDL": {
+    "aliases": [],
+    "pmd_language_id": "wsdl",
+    "default_ruleset": "category/wsdl/bestpractices.xml,category/wsdl/errorprone.xml",
+    "pmd_docs_base_url": "https://docs.pmd-code.org/latest/pmd_rules_wsdl.html"
+  },
+  "XML": {
+    "aliases": [],
+    "pmd_language_id": "xml",
+    "default_ruleset": "category/xml/bestpractices.xml,category/xml/errorprone.xml",
+    "pmd_docs_base_url": "https://docs.pmd-code.org/latest/pmd_rules_xml.html"
+  },
+  "XSLT": {
+    "aliases": ["XSL"],
+    "pmd_language_id": "xsl",
+    "default_ruleset": "category/xsl/codestyle.xml",
+    "pmd_docs_base_url": "https://docs.pmd-code.org/latest/pmd_rules_xsl.html"
+  }
+}

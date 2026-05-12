@@ -1,0 +1,66 @@
+{
+  "formatVersion": 0,
+  "pmdVersion": "7.0.0",
+  "timestamp": "2026-05-12T10:00:00.000+02:00",
+  "files": [
+    {
+      "filename": "/tmp/repo/src/Foo.java",
+      "violations": [
+        {
+          "beginline": 3,
+          "endline": 3,
+          "begincolumn": 9,
+          "endcolumn": 14,
+          "rule": "UnusedLocalVariable",
+          "ruleset": "Best Practices",
+          "description": "Avoid unused local variables such as 'x'.",
+          "priority": 3,
+          "externalInfoUrl": "https://docs.pmd-code.org/latest/pmd_rules_java_bestpractices.html#unusedlocalvariable"
+        },
+        {
+          "beginline": 7,
+          "endline": 9,
+          "begincolumn": 9,
+          "endcolumn": 9,
+          "rule": "EmptyCatchBlock",
+          "ruleset": "Error Prone",
+          "description": "Avoid empty catch blocks.",
+          "priority": 3,
+          "externalInfoUrl": "https://docs.pmd-code.org/latest/pmd_rules_java_errorprone.html#emptycatchblock"
+        }
+      ]
+    },
+    {
+      "filename": "/tmp/repo/src/Bar.java",
+      "violations": [
+        {
+          "beginline": 12,
+          "endline": 12,
+          "begincolumn": 9,
+          "endcolumn": 27,
+          "rule": "AvoidPrintStackTrace",
+          "ruleset": "Best Practices",
+          "description": "Avoid printStackTrace; use a logger call instead.",
+          "priority": 3,
+          "externalInfoUrl": "https://docs.pmd-code.org/latest/pmd_rules_java_bestpractices.html#avoidprintstacktrace"
+        }
+      ]
+    },
+    {
+      "filename": "/tmp/repo/src/Baz.java",
+      "violations": [
+        {
+          "beginline": 5,
+          "endline": 5,
+          "begincolumn": 9,
+          "endcolumn": 9,
+          "rule": "EmptyCatchBlock",
+          "ruleset": "Error Prone",
+          "description": "Avoid empty catch blocks.",
+          "priority": 3,
+          "externalInfoUrl": "https://docs.pmd-code.org/latest/pmd_rules_java_errorprone.html#emptycatchblock"
+        }
+      ]
+    }
+  ]
+}

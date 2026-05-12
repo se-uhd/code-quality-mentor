@@ -1,0 +1,6 @@
+{
+  "Java": {"size": 51200, "percentage": "85.0%", "type": "programming", "color": "#b07219"},
+  "JavaScript": {"size": 6144, "percentage": "10.0%", "type": "programming"},
+  "Rust": {"size": 2048, "percentage": "3.5%", "type": "programming"},
+  "Markdown": {"size": 921, "percentage": "1.5%", "type": "prose"}
+}

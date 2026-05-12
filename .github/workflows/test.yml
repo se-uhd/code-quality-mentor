@@ -1,0 +1,99 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  light:
+    name: light (bats + jq, layers 1 & 2)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install bats and jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bats jq
+      - name: Run test suite
+        run: ./plugins/code-quality-mentor/scripts/tests/run.sh
+
+  full:
+    name: full (java + pmd + spotbugs + linguist, all layers)
+    runs-on: ubuntu-latest
+    env:
+      PMD_VERSION: 7.24.0
+      SPOTBUGS_VERSION: 4.9.8
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install bats, jq, and libicu (linguist dep)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bats jq libicu-dev cmake pkg-config
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+
+      - name: Install github-linguist
+        run: gem install github-linguist
+
+      - name: Cache PMD release
+        id: pmd-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/pmd
+          key: pmd-${{ env.PMD_VERSION }}
+
+      - name: Install PMD
+        if: steps.pmd-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/pmd
+          curl -fsSL -o /tmp/pmd.zip \
+            "https://github.com/pmd/pmd/releases/download/pmd_releases%2F${PMD_VERSION}/pmd-dist-${PMD_VERSION}-bin.zip"
+          unzip -q /tmp/pmd.zip -d ~/pmd
+
+      - name: Put PMD on PATH
+        run: echo "$HOME/pmd/pmd-bin-${PMD_VERSION}/bin" >> "$GITHUB_PATH"
+
+      - name: Cache SpotBugs release
+        id: spotbugs-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/spotbugs
+          key: spotbugs-${{ env.SPOTBUGS_VERSION }}
+
+      - name: Install SpotBugs
+        if: steps.spotbugs-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/spotbugs
+          curl -fsSL -o /tmp/spotbugs.tgz \
+            "https://github.com/spotbugs/spotbugs/releases/download/${SPOTBUGS_VERSION}/spotbugs-${SPOTBUGS_VERSION}.tgz"
+          tar -xzf /tmp/spotbugs.tgz -C ~/spotbugs
+
+      - name: Put SpotBugs on PATH
+        run: echo "$HOME/spotbugs/spotbugs-${SPOTBUGS_VERSION}/bin" >> "$GITHUB_PATH"
+
+      - name: Verify tools (presence and major version)
+        run: |
+          java -version
+          javac -version
+          pmd --version | tee /tmp/pmd_ver
+          grep -qE '^PMD 7\.' /tmp/pmd_ver \
+            || grep -qE '7\.[0-9]+\.[0-9]+' /tmp/pmd_ver \
+            || { echo "ERROR: expected PMD 7.x, got $(cat /tmp/pmd_ver)"; exit 1; }
+          spotbugs -version | tee /tmp/sb_ver
+          grep -qE '^4\.[0-9]+' /tmp/sb_ver \
+            || { echo "ERROR: expected SpotBugs 4.x, got $(cat /tmp/sb_ver)"; exit 1; }
+          github-linguist --version
+          jq --version
+          bats --version
+          git --version
+
+      - name: Run test suite
+        run: ./plugins/code-quality-mentor/scripts/tests/run.sh

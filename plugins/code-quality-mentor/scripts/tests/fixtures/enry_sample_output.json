@@ -1,0 +1,5 @@
+{
+  "Java": ["src/Foo.java", "src/Bar.java", "src/Baz.java"],
+  "Apex": ["force-app/Trigger.cls"],
+  "Python": ["scripts/build.py"]
+}
