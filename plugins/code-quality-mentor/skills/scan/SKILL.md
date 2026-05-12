@@ -46,30 +46,43 @@ If anything is missing, the script prints platform-specific install hints and ex
 
 5. **Run PMD.** Concatenate the `ruleset` fields of the selected languages with commas. Run `${CLAUDE_SKILL_DIR}/../../scripts/run_pmd.sh "$REPO_ROOT" "<ruleset-csv>"`. The script writes `$REPO_ROOT/.code-quality-mentor/pmd-report.json` and prints its path. On non-zero exit, surface the stderr log path to the user and stop.
 
-6. **Run SpotBugs (JVM only).** If Java or Kotlin was among the selected languages, run `${CLAUDE_SKILL_DIR}/../../scripts/run_spotbugs.sh "$REPO_ROOT"`. SpotBugs is a required prerequisite checked in step 1, so `spotbugs` is on PATH at this point. Three outcomes:
-   - **Exit 0** — the script writes `$REPO_ROOT/.code-quality-mentor/spotbugs-report.json` and prints its path. Continue to step 7.
-   - **Exit 2** — no compiled bytecode found. Tell the user SpotBugs needs a built project (`mvn compile`, `gradle classes`, or similar) and continue with PMD-only findings.
+6. **Decide on SpotBugs build state (JVM only).** Skip to step 8 if neither Java nor Kotlin is in the selection.
+
+   Otherwise:
+   - Run `${CLAUDE_SKILL_DIR}/../../scripts/find_classes.sh "$REPO_ROOT"` to check whether compiled bytecode already exists (`class_dirs` non-empty).
+   - Inspect the repo to identify the build tool: a `pom.xml` (or `mvnw` wrapper) means Maven; `build.gradle` / `build.gradle.kts` / `settings.gradle*` (or a `gradlew` wrapper) means Gradle; `build.sbt` means sbt. If none of these markers exist, treat the build tool as unknown.
+   - When you propose a build command, prefer the wrapper if present (`./mvnw`, `./gradlew`), and stick to a minimal compile target so the rebuild stays fast — e.g., `./mvnw -q -DskipTests compile`, `./gradlew --no-daemon classes`, or `sbt compile`.
+
+   Use `AskUserQuestion` to decide:
+   - **Existing classes + recognized build tool:** offer "Use existing classes" (default), "Rebuild then scan", "Skip SpotBugs".
+   - **No existing classes + recognized build tool:** offer "Build then scan" (default), "Skip SpotBugs".
+   - **Classes present, no recognized build tool:** proceed with existing classes; no question needed.
+   - **No classes and no recognized build tool:** skip SpotBugs with a one-line notice; SpotBugs cannot scan without bytecode.
+
+   If the user picks "(Re)build then scan", run the proposed command via Bash from `$REPO_ROOT`. On non-zero build exit, surface the build error and either fall back to existing classes (when any are present) or skip SpotBugs.
+
+7. **Run SpotBugs.** Skip this step if step 6 decided to skip SpotBugs. Otherwise run `${CLAUDE_SKILL_DIR}/../../scripts/run_spotbugs.sh "$REPO_ROOT"`. Three outcomes:
+   - **Exit 0** — the script writes `$REPO_ROOT/.code-quality-mentor/spotbugs-report.json` and prints its path. Continue.
+   - **Exit 2** — no compiled bytecode found (should only happen if step 6's build attempt failed silently). Continue with PMD-only findings.
    - **Exit 1** — analysis failed. Surface the stderr log path and continue with PMD-only findings; do not abort the run.
 
-   If no JVM language is in the selection, skip this step entirely.
+8. **Merge findings.** If `spotbugs-report.json` exists, run `${CLAUDE_SKILL_DIR}/../../scripts/merge_reports.sh "$REPO_ROOT/.code-quality-mentor/findings-report.json" "$REPO_ROOT/.code-quality-mentor/pmd-report.json" "$REPO_ROOT/.code-quality-mentor/spotbugs-report.json"`. Otherwise copy the PMD report to `findings-report.json` (so the next step has a stable input path). If the combined report contains zero violations, congratulate the user and stop.
 
-7. **Merge findings.** If `spotbugs-report.json` exists, run `${CLAUDE_SKILL_DIR}/../../scripts/merge_reports.sh "$REPO_ROOT/.code-quality-mentor/findings-report.json" "$REPO_ROOT/.code-quality-mentor/pmd-report.json" "$REPO_ROOT/.code-quality-mentor/spotbugs-report.json"`. Otherwise copy the PMD report to `findings-report.json` (so the next step has a stable input path). If the combined report contains zero violations, congratulate the user and stop.
+9. **Attribute warnings.** Run `${CLAUDE_SKILL_DIR}/../../scripts/blame_warnings.sh "$REPO_ROOT" "$REPO_ROOT/.code-quality-mentor/findings-report.json"`. This writes `$REPO_ROOT/.code-quality-mentor/blame-report.json` (an array of authors with their warnings, sorted by warning count descending). If the array is empty, tell the user findings exist but `git blame` could not attribute any of them (possible if all flagged files were deleted in HEAD) and stop.
 
-8. **Attribute warnings.** Run `${CLAUDE_SKILL_DIR}/../../scripts/blame_warnings.sh "$REPO_ROOT" "$REPO_ROOT/.code-quality-mentor/findings-report.json"`. This writes `$REPO_ROOT/.code-quality-mentor/blame-report.json` (an array of authors with their warnings, sorted by warning count descending). If the array is empty, tell the user findings exist but `git blame` could not attribute any of them (possible if all flagged files were deleted in HEAD) and stop.
+10. **Author selection.** Read the blame report. **If exactly one author has attributable warnings**, skip the question entirely: tell the user "Only <name> has attributable warnings; using them" and continue. **Otherwise**, use `AskUserQuestion` to present the top authors. Build options as `<Name> <<email>>: N warnings`. The tool supports up to 4 options. Use the first three slots for the top three authors by warning count. Use the fourth slot for "Show full list". When the user picks "Show full list", render a numbered list inline and ask them to reply with a number or with `name <email>` directly. The tool's automatic "Other" fallback also lets them type a name or email directly.
 
-9. **Author selection.** Read the blame report. Use `AskUserQuestion` to present the top authors. Build options as `<Name> <<email>>: N warnings`. The tool supports up to 4 options. Use the first three slots for the top three authors by warning count. Use the fourth slot for "Show full list". When the user picks "Show full list", render a numbered list inline and ask them to reply with a number or with `name <email>` directly. The tool's automatic "Other" fallback also lets them type a name or email directly.
-
-10. **Tailoring.** Use `AskUserQuestion` to gather three preferences (one question at a time):
+11. **Tailoring.** Use `AskUserQuestion` to gather three preferences, one question at a time. **These three questions are mandatory and must always be asked**, even if the broader session has instructed the agent to "work without stopping" or "skip clarifying questions". They are not clarifications — they are inputs to the artifact's shape. The depth, focus, and seniority answers materially change what `LEARNING_PLAN.md` covers, and silently picking defaults produces a generic plan rather than a tailored one. Do not invent a "no-pause" or "non-interactive" exception.
 
     - **Depth.** Options: "Terse — top 3 rules", "Standard — top 4 rules", "Deeper — top 5 rules". This drives how many rules the plan covers.
     - **Focus area.** Options: "Whatever is most frequent in their warnings" (default), "Best practices and error-prone code", "Design and maintainability", "Performance and security". When the user picks a focus area, filter the author's warnings by the matching PMD/SpotBugs category before ranking.
     - **Seniority framing.** Options: "Junior — explain fundamentals", "Mid-level — concise, link to deeper sources", "Senior — assume the basics, focus on edge cases and tradeoffs". This drives prose tone, not content scope.
 
-11. **Pick the rules.** From the selected author's warnings (filtered by focus area when applicable), count occurrences per `rule` and take the top N (3, 4, or 5 from the depth choice). If fewer distinct rules exist than N, just use what is available; do not pad. Treat PMD rule names (e.g., `EmptyCatchBlock`) and SpotBugs bug types (e.g., `EI_EXPOSE_REP`) as the same kind of identifier; both are first-class entries in the count.
+12. **Pick the rules.** From the selected author's warnings (filtered by focus area when applicable), count occurrences per `rule` and take the top N (3, 4, or 5 from the depth choice). If fewer distinct rules exist than N, just use what is available; do not pad. Treat PMD rule names (e.g., `EmptyCatchBlock`) and SpotBugs bug types (e.g., `EI_EXPOSE_REP`) as the same kind of identifier; both are first-class entries in the count.
 
-12. **Read the author's flagged code.** For each selected rule, pick 1 or 2 representative warnings, by default the most recent two by file modification time, unless one offers a materially different angle than the other (different pattern, different file type). For each chosen warning, use the `Read` tool with the warning's `line` (and the line range of `beginline` to `endline` when the report provides it) to read the actual source snippet plus a few lines of surrounding context. Quote the snippet verbatim; do not invent code.
+13. **Read the author's flagged code.** For each selected rule, pick 1 or 2 representative warnings, by default the most recent two by file modification time, unless one offers a materially different angle than the other (different pattern, different file type). For each chosen warning, use the `Read` tool with the warning's `line` (and the line range of `beginline` to `endline` when the report provides it) to read the actual source snippet plus a few lines of surrounding context. Quote the snippet verbatim; do not invent code.
 
-13. **Synthesize `LEARNING_PLAN.md`.** Target **600–1200 words total** (a 3–5 minute read). Use this structure:
+14. **Synthesize `LEARNING_PLAN.md`.** Target **600–1200 words total** (a 3–5 minute read). Use this structure:
 
     ```markdown
     # Learning plan for <Author Name>
@@ -109,13 +122,13 @@ If anything is missing, the script prints platform-specific install hints and ex
 
     Cap each rule section at ~150–220 words. Use exactly one snippet per rule by default; use two only when the second illustrates a materially different angle.
 
-14. **Critical content rules.**
+15. **Critical content rules.**
     - **Use verbatim snippets** from the `Read` tool. Do not invent or paraphrase the author's code.
     - **Construct PMD URLs deterministically** using the per-language `pmd_docs_base_url` from `../../shared/pmd-languages.json` and the rule name as the anchor (e.g., `https://docs.pmd-code.org/latest/pmd_rules_java_errorprone.html#emptycatchblock`). PMD anchor names are lowercase. If unsure of the exact category for a rule, list the language-level docs URL instead — never fabricate.
     - **Every rule section must include at least one canonical non-PMD reference** in "Further reading" — a specific *Effective Java* item, a *Clean Code* chapter, a peer-reviewed paper with full title and year, or a named conference talk with speaker and venue. Tool docs alone are not enough. If you genuinely cannot recall a good canonical reference for a particular rule, say so in the plan ("PMD docs are the best single reference for this rule") rather than fabricating one.
     - **Never invent URLs.** Books and papers may be cited without a URL when the title + author + section is enough to locate them.
 
-15. **Write the file.** Write `LEARNING_PLAN.md` to `$REPO_ROOT/LEARNING_PLAN.md`. Report the path back to the user, along with a one-line summary like: "Learning plan written for <Author Name> covering <N> rules across <M> warnings."
+16. **Write the file.** Write `LEARNING_PLAN.md` to `$REPO_ROOT/LEARNING_PLAN.md`. Report the path back to the user, along with a one-line summary like: "Learning plan written for <Author Name> covering <N> rules across <M> warnings."
 
 ## Argument handling
 
