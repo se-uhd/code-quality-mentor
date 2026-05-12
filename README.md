@@ -16,7 +16,7 @@ The workflow runs end to end on the enclosing git repository:
 
 1. Detects which PMD-supported languages are present, using GitHub Linguist (or `enry`).
 2. Runs `pmd check` with sensible default rulesets for each detected language.
-3. If Java or Kotlin is present, runs SpotBugs on the compiled bytecode for bug-pattern detection beyond what PMD covers. SpotBugs needs a built project: it reads from `target/classes`, `build/classes/java/main`, `build/classes/kotlin/main`, or similar standard locations. If no compiled classes are found, this step is skipped with a notice.
+3. If Java or Kotlin is present, asks whether to run SpotBugs against the existing compiled classes, rebuild first, or skip SpotBugs. When a Maven/Gradle/sbt build descriptor is detected, the rebuild option uses the project's own wrapper (`./mvnw`, `./gradlew`) when present. Existing classes are picked up from `target/classes`, `build/classes/java/main`, `build/classes/kotlin/main`, and similar standard locations.
 4. Merges the PMD and SpotBugs findings into a single report (or uses the PMD report alone when SpotBugs did not run).
 5. Attributes every warning's first line to a `git blame` author.
 6. Asks you to pick one developer from the list, sorted by warning count.
