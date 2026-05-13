@@ -1,7 +1,7 @@
 ---
 name: scan
 description: Scan a git repository with PMD plus an LLM-based antipattern scan driven by the bundled catalog, attribute each finding to its git-blame author, ask the user to select one developer, and synthesize a tailored LEARNING_PLAN.md with concept explanations, refactor sketches of the author's actual flagged code, and pointers to canonical references. Use when the user asks to scan a codebase for code-quality issues, build a personalized learning plan from static analysis findings, or coach a specific developer based on their characteristic warnings. Writes intermediate JSON reports under .code-quality-mentor/ and a final LEARNING_PLAN.md at the repo root.
-version: 0.3.0
+version: 0.4.0
 license: MIT
 ---
 
@@ -10,6 +10,8 @@ license: MIT
 This skill turns PMD warnings — plus an LLM-driven antipattern scan that fills the gap PMD's rule engine cannot — into a personalized learning plan for one developer on a team. PMD tells you *what* mechanical issues are in the code; the catalog-driven LLM scan looks for design smells and antipatterns PMD does not detect; `git blame` tells you *who* wrote it. This skill closes the loop: it picks one author, derives their characteristic code quality blind spots from the merged findings on their lines, and writes a tailored `LEARNING_PLAN.md` with concept explanations, refactor sketches of their actual code, and verified external pointers.
 
 **Audience and tone.** The default user is a developer reviewing their own warnings to improve. Frame findings as learning opportunities. A learning plan is not a performance review. The plan is a coaching artifact: direct, concise, and oriented toward *understanding* concepts rather than just fixing lines.
+
+**No meta-commentary.** When you progress through this workflow, state the action you are taking, not the harness rule that permits it. Never write things like "since the user disabled pauses", "per the skill I'll proceed with the default", or "as instructed I'll skip the prompt." If a prompt is suppressed by session state, just proceed silently with the documented default. The user sees the action; the scaffolding is internal.
 
 ## When to use
 
@@ -50,7 +52,7 @@ If anything is missing, the script prints platform-specific install hints and ex
    - "Run only on PMD-flagged files" — cheaper; scope is the files PMD already touched.
    - "Skip" — proceed with PMD findings alone.
 
-   If the user opts out of the prompt by an earlier "no-pause" directive, run with the default. Skip this step entirely if PMD found zero violations *and* the user has explicitly asked for a PMD-only run.
+   If the broader session has suppressed prompts, silently proceed with the default — do **not** narrate the reason (no "since the user disabled pauses", no "per the skill I'll proceed with the default"). Just continue. Skip this step entirely if PMD found zero violations *and* the user has explicitly asked for a PMD-only run.
 
 7. **Run the LLM antipattern scan.** Skip if step 6 chose "Skip". Otherwise:
    - Read `${CLAUDE_SKILL_DIR}/../../shared/antipatterns.json` and `${CLAUDE_SKILL_DIR}/../../scripts/llm_scan_prompt.md`. The prompt file is the canonical specification of how you (Claude) carry out the scan; follow it.
@@ -73,40 +75,77 @@ If anything is missing, the script prints platform-specific install hints and ex
 
 13. **Read the author's flagged code.** For each selected rule, pick 1 or 2 representative warnings, by default the most recent two by file modification time, unless one offers a materially different angle than the other (different pattern, different file type). For each chosen warning, use the `Read` tool with the warning's `line` (and the line range of `beginline` to `endline` when the report provides it) to read the actual source snippet plus a few lines of surrounding context. Quote the snippet verbatim; do not invent code.
 
-14. **Synthesize `LEARNING_PLAN.md`.** Target **600–1200 words total** (a 3–5 minute read). The plan is a coaching artifact, not a lint report. **Concepts come first. Code illustrates the concept — it never carries the explanation by itself.** Use this structure:
+14. **Synthesize `LEARNING_PLAN.md`.** Target **1200–2000 words total** (a 5–8 minute read). The plan is a coaching artifact, not a lint report. Concepts come first; code is evidence. The structure below is mechanical so the plan is both readable and parseable — a downstream tool can split on the headings and field markers, and a future revise mode can act on findings.
 
     ```markdown
     # Learning plan for <Author Name>
 
-    <one-paragraph profile of the patterns observed in this author's warnings — neutral, specific, and themed by *concept*, not by rule name. Example: "Your warnings cluster around two themes: exception handling as control flow (EmptyCatchBlock, AvoidThrowingRawExceptionTypes) and unclear ownership of state (UnusedPrivateField, DataClass). Both come back to the same underlying idea: making the program's intent visible from the code.">
+    - **Author:** <Name> <<email>>
+    - **Findings reviewed:** <N>
+    - **Rules covered:** <N>
+    - **Depth:** <terse | standard | deeper>
+    - **Focus:** <focus area>
+    - **Seniority framing:** <junior | mid-level | senior>
 
-    ## <RuleName 1> — <one-line conceptual framing, not just the rule name>
+    ## Profile
 
-    **What this is really about.** <3–5 sentences explaining the *concept* the rule defends. Name the principle out loud (e.g., "fail fast", "information hiding", "tell, don't ask", "single responsibility", "make illegal states unrepresentable"). Explain *why* the principle exists before talking about the mechanical violation. A reader who has never seen the rule should leave this paragraph understanding the idea.>
+    <One paragraph, 3–5 sentences. Theme the patterns by *concept*, not by rule name. Example: "Your warnings cluster around two themes: exception handling as control flow (EmptyCatchBlock, AvoidThrowingRawExceptionTypes) and unclear ownership of state (UnusedPrivateField, DataClass). Both come back to making the program's intent visible from the code.">
 
-    **Why it matters.** <2–4 sentences. Concrete consequences when the principle is broken — surprised debuggers six months later, hidden coupling that ripples on the next refactor, security or performance pitfalls. Be specific, not generic; cite the kind of incident this smell tends to cause.>
+    ---
 
-    **What good looks like.** <2–4 sentences. Describe the idiomatic shape of code that honors the principle. Name the named refactoring (Extract Method, Replace Conditional with Polymorphism, Introduce Value Object, …). One sentence on what the refactoring buys you conceptually.>
+    ## <rule_id>
 
-    **In your code.** <One short verbatim snippet, drawn via `Read` from the author's actual flagged file. Two or three lines of context, no more. The snippet is evidence, not the explanation — keep the prose around it focused on *which* aspect of the snippet matches the concept above. A one-line refactored sketch is optional and only worth including when it makes the conceptual point clearer.>
+    - **Family:** <catalog family, e.g., Bloaters / Couplers / OO Abusers; or PMD ruleset>
+    - **Source:** <catalog | PMD>
+    - **Occurrences:** <N>
+    - **Locations:**
+      - `<file:line>` — <one-sentence cite of the specific signal seen here>
+      - `<file:line>` — ...
+
+    ### Concept
+
+    <3–5 sentences explaining the underlying design principle and the named refactoring vocabulary (e.g., "Extract Function", "Encapsulate Variable", "Replace Conditional with Polymorphism"). Plain prose; no bold paragraph leads inside this subsection.>
+
+    ### Why it matters here
+
+    <2–4 sentences. Specific consequence in *this* codebase — name the file, the call site, the kind of change that would break next. Plain prose.>
+
+    ### Refactoring
+
+    <2–4 sentences. The named refactoring + the specific shape it would take here (concrete class names, method names, file moves). Plain prose.>
+
+    ### Evidence
+
     ```<language>
     // <relative-path>:<line>
-    <verbatim snippet>
+    <one verbatim snippet, 3–8 lines, drawn via the `Read` tool from the author's actual flagged file>
     ```
 
-    **Further reading.**
-    - <Canonical conceptual reference first: a specific *Refactoring* item, *Effective Java* item, *Clean Code* chapter, a peer-reviewed paper with full title + year, or a named conference talk with speaker. This is what teaches the *idea*.>
-    - <Tool docs second (PMD docs URL for PMD rules, catalog `canonical_references[0]` URL for catalog antipatterns). Tool docs are the lookup, not the lesson.>
+    ### Further reading
 
-    ## <RuleName 2> — <conceptual framing>
-    ...
+    - **<Author, *Title*, ed., year, chapter/section + page if known.>**
+
+      <Two- to four-sentence paraphrase (or short excerpt) that captures the specific idea this reference contributes. Label paraphrases as such — do not assert verbatim quotes you cannot verify. The reader should be able to see *what is in there* without leaving the document.>
+
+      Applies here: <one sentence connecting the reference's idea to this finding>.
+
+    - [<short link title, e.g., "refactoring.guru: Long Method">](<URL>) — <one-line description of what is at the URL, e.g., "quick lookup if you do not have the book at hand">
+
+    Every URL goes inside `[title](url)`. Never write a raw URL, a bolded URL (`**https://...**`), or `<https://...>`. The link title is short and human-readable; the description is what is at the URL and why it is useful. The same rule applies to a URL that supplements a book/paper citation (e.g., a conference talk's video) — wrap it as `[video, ~30 min](url)`, not as a trailing bare URL.
+
+    ---
+
+    ## <rule_id_2>
+    ... (same shape as above)
+
+    ---
 
     ## Habits going forward
 
-    - <2–4 short, concrete habits framed as *thinking* habits, not just commands. Example: "Before you write a `try`/`catch`, ask: am I genuinely recovering, or am I hiding a failure? If you cannot answer the first half, let the exception propagate."  A pre-commit snippet is allowed but should not replace the conceptual habit.>
+    - <2–4 short, concrete *thinking* habits, not just commands. Example: "Before you write a `try`/`catch`, ask: am I genuinely recovering, or am I hiding a failure? If you cannot answer the first half, let the exception propagate.">
     ```
 
-    Cap each rule section at ~180–240 words. Use exactly one verbatim snippet per rule. **The concept paragraph is the longest paragraph in the section** — if it is shorter than "In your code", the section is upside-down and should be rewritten.
+    Each rule section targets ~300–450 words once metadata, prose subsections, evidence snippet, and Further reading are combined.
 
 15. **Critical content rules.**
     - **Lead with the concept, not the code.** The first paragraph of every rule section explains the underlying principle in plain language; the code snippet appears later, as evidence that the principle was violated *here*. If a reader can skip the code and still understand the lesson, the section is doing its job.
@@ -118,6 +157,10 @@ If anything is missing, the script prints platform-specific install hints and ex
     - **Never invent URLs.** Books and papers may be cited without a URL in LEARNING_PLAN.md when the title + author + section is enough to locate them.
 
 16. **Write the file.** Write `LEARNING_PLAN.md` to `$REPO_ROOT/LEARNING_PLAN.md`. Report the path back to the user, along with a one-line summary like: "Learning plan written for <Author Name> covering <N> rules across <M> warnings."
+
+17. **Slop carve-out check.** Read `${CLAUDE_SKILL_DIR}/../../shared/slop-checks.md`. The file lists a small set of focused checks against AI-slop tropes specific to coaching-artifact prose. Re-read the `LEARNING_PLAN.md` you just wrote and apply each check; if you find any matches, rewrite the offending passages in place and overwrite the file. The carve-out is in-skill and focused on purpose: do not depend on or vendor the `ai-slop` plugin, and do not extend the carve-out beyond the cap stated in the file.
+
+    Write findings to `$REPO_ROOT/.code-quality-mentor/slop-report.json` as a list of `{rule_id, file, line, quote, suggested_revision}` records (PMD-shape adjacent; a future revise mode can act on it). The `rule_id` matches the H2 heading in `slop-checks.md` (e.g., `anti-copula`, `em-dash-budget`). If the list is empty, write an empty array `[]`. Leave the slop report on disk for transparency even after fixing the plan.
 
 ## Argument handling
 
@@ -135,6 +178,7 @@ This command takes no positional arguments. It always operates on the enclosing 
 
 - `${CLAUDE_SKILL_DIR}/../../shared/pmd-languages.json` — the Linguist→PMD language map.
 - `${CLAUDE_SKILL_DIR}/../../shared/antipatterns.json` — the catalog of antipatterns and code smells the LLM scan applies.
+- `${CLAUDE_SKILL_DIR}/../../shared/slop-checks.md` — the slop carve-out applied as a post-pass to the freshly written LEARNING_PLAN.md.
 - `${CLAUDE_SKILL_DIR}/../../scripts/llm_scan_prompt.md` — the prompt template that defines the LLM scan's procedure and output contract.
 
 ## Files this skill writes
@@ -144,5 +188,6 @@ This command takes no positional arguments. It always operates on the enclosing 
 - `$REPO_ROOT/.code-quality-mentor/findings-report.json` — merged PMD + LLM scan (or a copy of `pmd-report.json` when the LLM scan was skipped)
 - `$REPO_ROOT/.code-quality-mentor/blame-report.json`
 - `$REPO_ROOT/LEARNING_PLAN.md`
+- `$REPO_ROOT/.code-quality-mentor/slop-report.json` — findings from the slop carve-out check on the generated plan (empty array `[]` when clean)
 
 It does not modify any source file in the user's repository.
