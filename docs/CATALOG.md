@@ -2,7 +2,7 @@
 
 This document is for plugin maintainers. End users do not edit the catalog — they consume it through `/code-quality-mentor:scan`.
 
-The catalog lives at `plugins/code-quality-mentor/shared/antipatterns.json` and ships with the plugin. The LLM antipattern scan reads it at run time, so additions and corrections take effect on the next scan after a plugin update.
+The catalog lives at `plugins/code-quality-mentor/skills/scan/assets/antipatterns.json` and ships with the plugin. The LLM antipattern scan reads it at run time, so additions and corrections take effect on the next scan after a plugin update.
 
 ## What the catalog is
 
@@ -12,7 +12,7 @@ The catalog deliberately avoids smells PMD already nails. Each entry's `pmd_over
 
 ## Schema
 
-The full schema is `plugins/code-quality-mentor/shared/antipatterns.schema.json`. Highlights:
+The full schema is `plugins/code-quality-mentor/skills/scan/assets/antipatterns.schema.json`. Highlights:
 
 - **Top level**: `version`, `lastUpdated`, `sources[]`, `entries[]`.
 - **Sources**: each upstream taxonomy (Fowler, refactoring.guru, SourceMaking, Detekt, etc.) gets one `sources[]` entry with `id`, `title`, and a resolvable `url`. URLs are mandatory — provenance is auditable.
@@ -21,7 +21,7 @@ The full schema is `plugins/code-quality-mentor/shared/antipatterns.schema.json`
 
 ## Updating the catalog
 
-The script at `plugins/code-quality-mentor/scripts/update_catalog.sh` is the maintainer tool. It is not exposed as a slash command.
+The script at `plugins/code-quality-mentor/skills/scan/scripts/update_catalog.sh` is the maintainer tool. It is not exposed as a slash command.
 
 ```bash
 scripts/update_catalog.sh validate
@@ -32,7 +32,7 @@ scripts/update_catalog.sh diff-upstream
 
 - **validate** — schema and provenance checks. Run before every commit that touches `antipatterns.json`. Also runs in CI via the bats suite. Exits non-zero on failure with a one-line pointer to the offending entry.
 - **refresh-refs** — HEAD-checks every URL in `sources[]` and `entries[].canonical_references[]`, reports any non-2xx as "needs review". Read-only. The `--offline` variant just counts URLs without making network calls.
-- **diff-upstream** — compares entry names against pinned snapshots in `plugins/code-quality-mentor/shared/upstream_snapshots/*.json` and lists smells the snapshots cover but the catalog does not. Read-only. Snapshots are refreshed manually when upstream sources publish new smells.
+- **diff-upstream** — compares entry names against pinned snapshots in `plugins/code-quality-mentor/skills/scan/assets/upstream_snapshots/*.json` and lists smells the snapshots cover but the catalog does not. Read-only. Snapshots are refreshed manually when upstream sources publish new smells.
 
 ## Adding a new entry
 

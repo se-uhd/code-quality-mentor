@@ -10,7 +10,7 @@
       "name": "code-quality-mentor",
       "source": "./plugins/code-quality-mentor",
       "description": "Slash command /code-quality-mentor:scan that runs PMD across a repo, attributes warnings by git blame, lets you pick one developer, and writes a focused LEARNING_PLAN.md with concept explanations, refactor sketches of the author's own flagged code, and pointers to canonical references.",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "license": "MIT"
     }
   ]

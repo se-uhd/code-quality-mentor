@@ -1,14 +1,15 @@
 # shellcheck shell=bash
 # test_helper.bash — common setup loaded by every *.bats file.
 
-# Path conventions: this file lives in <plugin>/scripts/tests/.
+# Path conventions: this file lives in <plugin>/skills/scan/scripts/tests/.
 TESTS_DIR="${BATS_TEST_DIRNAME}"
 SCRIPTS_DIR="$(cd "$TESTS_DIR/.." && pwd)"
-PLUGIN_DIR="$(cd "$SCRIPTS_DIR/.." && pwd)"
-SHARED_DIR="$PLUGIN_DIR/shared"
+SKILL_DIR="$(cd "$SCRIPTS_DIR/.." && pwd)"
+ASSETS_DIR="$SKILL_DIR/assets"
+REFERENCES_DIR="$SKILL_DIR/references"
 FIXTURES_DIR="$TESTS_DIR/fixtures"
 
-export TESTS_DIR SCRIPTS_DIR PLUGIN_DIR SHARED_DIR FIXTURES_DIR
+export TESTS_DIR SCRIPTS_DIR SKILL_DIR ASSETS_DIR REFERENCES_DIR FIXTURES_DIR
 
 # Tiny assertion helpers — keep dependencies to bats-core itself.
 

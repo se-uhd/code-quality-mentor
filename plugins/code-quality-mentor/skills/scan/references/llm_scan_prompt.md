@@ -1,10 +1,10 @@
 # LLM antipattern scan — prompt template
 
-This file is loaded by the `scan` skill at the "Run the LLM antipattern scan" step. The skill reads it together with `shared/antipatterns.json` and applies the instructions below to the user's repository. The output is a JSON file in the same shape PMD produces, so the rest of the pipeline (`merge_reports.sh`, `blame_warnings.sh`, LEARNING_PLAN.md synthesis) consumes it without changes.
+This file is loaded by the `scan` skill at the "Run the LLM antipattern scan" step. The skill reads it together with `assets/antipatterns.json` and applies the instructions below to the user's repository. The output is a JSON file in the same shape PMD produces, so the rest of the pipeline (`merge_reports.sh`, `blame_warnings.sh`, LEARNING_PLAN.md synthesis) consumes it without changes.
 
 ## Inputs you have
 
-- `CATALOG`: the parsed contents of `shared/antipatterns.json` (sources + entries).
+- `CATALOG`: the parsed contents of `assets/antipatterns.json` (sources + entries).
 - `PMD_REPORT`: the parsed contents of `.code-quality-mentor/pmd-report.json`.
 - `SELECTED_LANGUAGES`: the PMD language IDs the user agreed to scan (from the earlier language-confirmation step).
 - `REPO_ROOT`: the absolute path of the repository being scanned.

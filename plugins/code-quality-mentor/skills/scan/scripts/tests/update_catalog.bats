@@ -6,16 +6,16 @@ setup() {
   require_tool jq
 
   # Pin the catalog and schema under test by overriding the script's paths.
-  # We create a temp shared/ that mirrors the real layout so the script's
-  # relative path math works unchanged.
+  # We create a temp skill layout (scripts/ + assets/) that mirrors the real
+  # one so the script's relative path math works unchanged.
   WORK="$BATS_TEST_TMPDIR/work"
-  mkdir -p "$WORK/plugin/scripts" "$WORK/plugin/shared"
-  cp "$SCRIPTS_DIR/update_catalog.sh" "$WORK/plugin/scripts/update_catalog.sh"
-  chmod +x "$WORK/plugin/scripts/update_catalog.sh"
-  cp "$SHARED_DIR/antipatterns.schema.json" "$WORK/plugin/shared/antipatterns.schema.json"
+  mkdir -p "$WORK/skill/scripts" "$WORK/skill/assets"
+  cp "$SCRIPTS_DIR/update_catalog.sh" "$WORK/skill/scripts/update_catalog.sh"
+  chmod +x "$WORK/skill/scripts/update_catalog.sh"
+  cp "$ASSETS_DIR/antipatterns.schema.json" "$WORK/skill/assets/antipatterns.schema.json"
 
-  CAT="$WORK/plugin/shared/antipatterns.json"
-  SCRIPT="$WORK/plugin/scripts/update_catalog.sh"
+  CAT="$WORK/skill/assets/antipatterns.json"
+  SCRIPT="$WORK/skill/scripts/update_catalog.sh"
 
   # Minimal valid catalog: one source, one entry.
   cat > "$CAT" <<'EOF'
@@ -138,8 +138,8 @@ EOF
 }
 
 @test "diff-upstream: reports smells the catalog does not yet cover" {
-  mkdir -p "$WORK/plugin/shared/upstream_snapshots"
-  cat > "$WORK/plugin/shared/upstream_snapshots/test_source.json" <<'EOF'
+  mkdir -p "$WORK/skill/assets/upstream_snapshots"
+  cat > "$WORK/skill/assets/upstream_snapshots/test_source.json" <<'EOF'
 ["Long Method", "God Class", "Lava Flow"]
 EOF
   run "$SCRIPT" diff-upstream

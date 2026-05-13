@@ -4,7 +4,7 @@ load 'test_helper'
 
 setup() {
   require_tool jq
-  MAP="$SHARED_DIR/pmd-languages.json"
+  MAP="$ASSETS_DIR/pmd-languages.json"
   [ -f "$MAP" ] || { echo "pmd-languages.json not found at $MAP" >&2; return 1; }
 }
 

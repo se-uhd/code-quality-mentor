@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/se-uhd/code-quality-mentor/shared/antipatterns.schema.json",
+  "$id": "https://github.com/se-uhd/code-quality-mentor/plugins/code-quality-mentor/skills/scan/assets/antipatterns.schema.json",
   "title": "Antipattern and Code Smell Catalog",
   "type": "object",
   "required": ["version", "lastUpdated", "sources", "entries"],

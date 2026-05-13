@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # update_catalog.sh <subcommand> [args...]
 #
-# Maintain shared/antipatterns.json:
+# Maintain assets/antipatterns.json:
 #   validate       — assert schema conformance and provenance integrity. Exits
 #                    non-zero on the first failure, naming the offending id.
 #   refresh-refs   — HEAD-check every URL in sources[] and entries[].canonical_references[].
 #                    Read-only; reports non-2xx codes as "needs review".
-#   diff-upstream  — compare entry names against shared/upstream_snapshots/*.json
+#   diff-upstream  — compare entry names against assets/upstream_snapshots/*.json
 #                    and report smells the upstream lists cover but we do not.
 #                    Read-only; advisory.
 #
@@ -16,9 +16,9 @@
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "$0")" && pwd)"
-catalog="$script_dir/../shared/antipatterns.json"
-schema="$script_dir/../shared/antipatterns.schema.json"
-snapshots_dir="$script_dir/../shared/upstream_snapshots"
+catalog="$script_dir/../assets/antipatterns.json"
+schema="$script_dir/../assets/antipatterns.schema.json"
+snapshots_dir="$script_dir/../assets/upstream_snapshots"
 
 usage() {
   cat >&2 <<EOF

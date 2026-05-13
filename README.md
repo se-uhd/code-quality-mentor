@@ -16,7 +16,7 @@ The workflow runs end to end on the enclosing git repository:
 
 1. Detects which PMD-supported languages are present, using GitHub Linguist (or `enry`).
 2. Runs `pmd check` with sensible default rulesets for each detected language.
-3. Asks whether to run the LLM antipattern scan. When you say yes, Claude reads the bundled catalog (`shared/antipatterns.json`) and looks across the PMD-flagged files (plus a sample of the largest source files) for the design smells PMD does not detect. It emits findings in PMD-shape JSON.
+3. Asks whether to run the LLM antipattern scan. When you say yes, Claude reads the bundled catalog (`skills/scan/assets/antipatterns.json`) and looks across the PMD-flagged files (plus a sample of the largest source files) for the design smells PMD does not detect. It emits findings in PMD-shape JSON.
 4. Merges PMD and LLM-scan findings into a single report (or uses PMD alone when you skip the LLM scan).
 5. Attributes every finding's first line to a `git blame` author.
 6. Asks you to pick one developer from the list, sorted by finding count.
@@ -27,7 +27,7 @@ Intermediate JSON reports live under `.code-quality-mentor/`. The plugin never m
 
 ## The antipattern catalog
 
-The LLM scan is driven by `plugins/code-quality-mentor/shared/antipatterns.json`, a curated catalog of antipatterns and code smells. Each entry has an id, family (Bloaters, OO Abusers, Change Preventers, Dispensables, Couplers, Architecture), description, concrete detection signals, language-specific notes, named refactoring, and canonical references (book chapters, Fowler bliki pages, papers, talks — every reference carries a resolvable URL).
+The LLM scan is driven by `plugins/code-quality-mentor/skills/scan/assets/antipatterns.json`, a curated catalog of antipatterns and code smells. Each entry has an id, family (Bloaters, OO Abusers, Change Preventers, Dispensables, Couplers, Architecture), description, concrete detection signals, language-specific notes, named refactoring, and canonical references (book chapters, Fowler bliki pages, papers, talks — every reference carries a resolvable URL).
 
 The catalog ships with the plugin. End users do not edit it; they consume it through `/code-quality-mentor:scan`. Plugin maintainers update it via the script at `plugins/code-quality-mentor/scripts/update_catalog.sh`; see [docs/CATALOG.md](docs/CATALOG.md) for the maintenance workflow.
 
@@ -35,11 +35,11 @@ The catalog ships with the plugin. End users do not edit it; they consume it thr
 
 Every language for which PMD ships a rule-based ruleset (verified against [the PMD 7 rule reference](https://docs.pmd-code.org/latest/)):
 
-Apex, HTML, Java, Java Server Pages, JavaScript, Kotlin, Maven POM, Modelica, PLSQL, Scala, Swift, Velocity Template Language, Visualforce, WSDL, XML, XSLT (the names match the Linguist language IDs used by `shared/pmd-languages.json`).
+Apex, HTML, Java, Java Server Pages, JavaScript, Kotlin, Maven POM, Modelica, PLSQL, Scala, Swift, Velocity Template Language, Visualforce, WSDL, XML, XSLT (the names match the Linguist language IDs used by `skills/scan/assets/pmd-languages.json`).
 
 The plugin does not analyze languages that PMD parses for CPD (copy-paste detection) only — C/C++, C#, CSS, Dart, Fortran, Gherkin, Go, Groovy, Julia, Lua, Matlab, Objective-C, Perl, PHP, Python, Ruby, Rust, T-SQL, Coco. CPD finds duplication, not the rule-based warnings this plugin teaches from.
 
-The language-to-ruleset map lives at `plugins/code-quality-mentor/shared/pmd-languages.json` and is straightforward to edit if you want a stricter or laxer default per language.
+The language-to-ruleset map lives at `plugins/code-quality-mentor/skills/scan/assets/pmd-languages.json` and is straightforward to edit if you want a stricter or laxer default per language.
 
 ## Prerequisites
 
@@ -94,31 +94,36 @@ Add the scratch directory to your project's `.gitignore`:
 
 ## Layout
 
+The layout follows the [Agent Skills specification](https://agentskills.io/specification): each skill is a self-contained folder with `SKILL.md` plus the optional `scripts/`, `references/`, and `assets/` subdirectories.
+
 ```
 plugins/code-quality-mentor/
-  commands/scan.md            # slash-command shim that invokes the skill
-  skills/scan/SKILL.md        # the workflow Claude follows
-  scripts/                    # bash + jq + awk helpers
-    find_repo_root.sh
-    check_prereqs.sh
-    detect_languages.sh
-    run_pmd.sh
-    merge_reports.sh          # combine PMD and LLM-scan findings
-    blame_warnings.sh
-    llm_scan_prompt.md        # prompt template for the LLM antipattern scan
-    update_catalog.sh         # maintainer-only catalog tooling
-    tests/                    # bats-core test suite (see below)
-  shared/
-    pmd-languages.json        # Linguist language name -> PMD ruleset map
-    antipatterns.json         # curated catalog driving the LLM scan
-    antipatterns.schema.json  # JSON Schema for the catalog
-docs/CATALOG.md               # maintainer guide for the catalog
+  commands/scan.md                # slash-command shim that invokes the skill
+  skills/scan/
+    SKILL.md                      # the workflow Claude follows
+    scripts/                      # executable code (bash + jq + awk helpers)
+      find_repo_root.sh
+      check_prereqs.sh
+      detect_languages.sh
+      run_pmd.sh
+      merge_reports.sh            # combine PMD and LLM-scan findings
+      blame_warnings.sh
+      update_catalog.sh           # maintainer-only catalog tooling
+      tests/                      # bats-core test suite (see below)
+    references/                   # documentation Claude reads on demand
+      llm_scan_prompt.md          # prompt template for the LLM antipattern scan
+      slop-checks.md              # in-skill carve-out applied to LEARNING_PLAN.md
+    assets/                       # static data files
+      pmd-languages.json          # Linguist language name -> PMD ruleset map
+      antipatterns.json           # curated catalog driving the LLM scan
+      antipatterns.schema.json    # JSON Schema for the catalog
+docs/CATALOG.md                   # maintainer guide for the catalog
 ```
 
 ## Tests
 
 ```
-plugins/code-quality-mentor/scripts/tests/run.sh
+plugins/code-quality-mentor/skills/scan/scripts/tests/run.sh
 ```
 
 The suite is organized in three layers:

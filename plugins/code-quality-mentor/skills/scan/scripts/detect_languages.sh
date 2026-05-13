@@ -3,7 +3,7 @@
 #
 # Detect the programming languages present in a Git repository using
 # GitHub Linguist (preferred) or enry (fallback), then intersect with the
-# languages PMD supports (per shared/pmd-languages.json).
+# languages PMD supports (per assets/pmd-languages.json).
 #
 # Output on stdout: a JSON array of objects, one per matched language:
 #   [
@@ -22,7 +22,7 @@
 #
 # Environment overrides (test hooks):
 #   LINGUIST_BIN  — path to the linguist binary to use (default: auto-detect)
-#   PMD_LANG_MAP  — path to pmd-languages.json (default: ../shared/pmd-languages.json)
+#   PMD_LANG_MAP  — path to pmd-languages.json (default: ../assets/pmd-languages.json)
 #
 # Exit codes:
 #   0 + JSON on stdout: detection succeeded (output may be `[]` if no PMD
@@ -43,7 +43,7 @@ if [ ! -d "$repo_root" ]; then
 fi
 
 script_dir="$(cd "$(dirname "$0")" && pwd)"
-pmd_lang_map="${PMD_LANG_MAP:-$script_dir/../shared/pmd-languages.json}"
+pmd_lang_map="${PMD_LANG_MAP:-$script_dir/../assets/pmd-languages.json}"
 
 if [ ! -f "$pmd_lang_map" ]; then
   echo "detect_languages: pmd-languages.json not found: $pmd_lang_map" >&2

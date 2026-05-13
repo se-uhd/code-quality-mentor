@@ -61,7 +61,7 @@ setup() {
   fi
 
   # Stub an LLM-scan report (the real scan is exercised manually). It uses the
-  # PMD-shape contract documented in shared/antipatterns.json. We pin a finding
+  # PMD-shape contract documented in assets/antipatterns.json. We pin a finding
   # on a file PMD already touched so blame still attributes both.
   flagged_file=$(jq -r '.files[0].filename' "$pmd_report")
   llm_scan_report="$REPO_DIR/.code-quality-mentor/llm-scan-report.json"
