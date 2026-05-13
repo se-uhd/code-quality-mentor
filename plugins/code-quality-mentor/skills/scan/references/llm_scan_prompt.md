@@ -26,6 +26,7 @@ This file is loaded by the `scan` skill at the "Run the LLM antipattern scan" st
    - **De-duplicate against PMD.** If a catalog entry has a `pmd_overlap` rule and that rule already appears in `PMD_REPORT` for the same `filename`, skip the LLM finding for that file. PMD's deterministic detection wins.
 
 3. **Emit each finding.** A finding is a violation object in PMD-shape:
+
    ```json
    {
      "beginline": <int — first line of the offending construct>,
@@ -37,9 +38,11 @@ This file is loaded by the `scan` skill at the "Run the LLM antipattern scan" st
      "externalInfoUrl": "<first canonical_references[].url for the entry, or empty string>"
    }
    ```
+
    The `description` is the most important field: it must cite the **specific signals** you saw in this code, not the catalog's generic description. The user reads it as the reason this line was flagged.
 
 4. **Assemble the report.** Group findings by filename. Build:
+
    ```json
    {
      "formatVersion": 0,
@@ -53,12 +56,15 @@ This file is loaded by the `scan` skill at the "Run the LLM antipattern scan" st
      ]
    }
    ```
+
    If you found nothing, still emit the wrapper with an empty `files` array.
 
 5. **Write the file.** Use the `Write` tool to write the assembled JSON to:
-   ```
+
+   ```text
    <REPO_ROOT>/.code-quality-mentor/llm-scan-report.json
    ```
+
    Report the path back to the calling skill so it can hand it to `merge_reports.sh`.
 
 ## Hard constraints

@@ -1,7 +1,7 @@
 ---
 name: scan
 description: Scan a git repository with PMD plus an LLM-based antipattern scan driven by the bundled catalog, attribute each finding to its git-blame author, ask the user to select one developer, and synthesize a tailored LEARNING_PLAN.md with concept explanations, refactor sketches of the author's actual flagged code, and pointers to canonical references. Use when the user asks to scan a codebase for code-quality issues, build a personalized learning plan from static analysis findings, or coach a specific developer based on their characteristic warnings. Writes intermediate JSON reports under .code-quality-mentor/ and a final LEARNING_PLAN.md at the repo root.
-version: 0.5.0
+version: 0.6.0
 license: MIT
 ---
 
@@ -77,7 +77,7 @@ If anything is missing, the script prints platform-specific install hints and ex
 
 14. **Synthesize `LEARNING_PLAN.md`.** Target **1200–2000 words total** (a 5–8 minute read). The plan is a coaching artifact, not a lint report. Concepts come first; code is evidence. The structure below is mechanical so the plan is both readable and parseable — a downstream tool can split on the headings and field markers, and a future revise mode can act on findings.
 
-    ```markdown
+    ````markdown
     # Learning plan for <Author Name>
 
     - **Author:** <Name> <<email>>
@@ -143,7 +143,7 @@ If anything is missing, the script prints platform-specific install hints and ex
     ## Habits going forward
 
     - <2–4 short, concrete *thinking* habits, not just commands. Example: "Before you write a `try`/`catch`, ask: am I genuinely recovering, or am I hiding a failure? If you cannot answer the first half, let the exception propagate.">
-    ```
+    ````
 
     Each rule section targets ~300–450 words once metadata, prose subsections, evidence snippet, and Further reading are combined.
 
@@ -151,6 +151,7 @@ If anything is missing, the script prints platform-specific install hints and ex
     - **Lead with the concept, not the code.** The first paragraph of every rule section explains the underlying principle in plain language; the code snippet appears later, as evidence that the principle was violated *here*. If a reader can skip the code and still understand the lesson, the section is doing its job.
     - **Name the principle.** Every concept paragraph should name an existing design principle, refactoring, or heuristic — "fail fast", "tell don't ask", "single responsibility", "Extract Method", "Replace Type Code with Subclasses". Catalog entries already carry their `refactoring` field; use it. PMD rules map to the same vocabulary even when the rule name does not.
     - **Use verbatim snippets** from the `Read` tool. Do not invent or paraphrase the author's code. Keep snippets short — 3 to 8 lines, with one or two lines of surrounding context.
+    - **Tag every Evidence fence with a language.** The opening backticks of the `### Evidence` block must be followed by a language hint derived from the file's extension (e.g., `` ```java `` for `.java`, `` ```python `` for `.py`, `` ```typescript `` for `.ts` or `.tsx`, `` ```go `` for `.go`, etc.). For files in a language without a common pygments alias, use `` ```text `` rather than leaving the fence bare. Languageless fences fail the linter's `md040` rule and force a revise iteration.
     - **For PMD rules**, construct the docs URL deterministically using the per-language `pmd_docs_base_url` from `assets/pmd-languages.json` and the rule name as the anchor (e.g., `https://docs.pmd-code.org/latest/pmd_rules_java_errorprone.html#emptycatchblock`). PMD anchor names are lowercase. If unsure of the exact category for a rule, list the language-level docs URL instead — never fabricate.
     - **For catalog antipatterns**, use the entry's `canonical_references` directly. Every reference in the catalog already carries a URL.
     - **Every rule section must include at least one canonical non-tool reference** in "Further reading" — a specific *Refactoring* / *Effective Java* / *Clean Code* item, a peer-reviewed paper with full title and year, or a named conference talk with speaker and venue. Tool docs alone are not enough. For catalog antipatterns this is automatic (the catalog ships them). For PMD rules, if you genuinely cannot recall a good canonical reference, say so in the plan rather than fabricating one.
@@ -159,6 +160,8 @@ If anything is missing, the script prints platform-specific install hints and ex
 16. **Write the file.** Write `LEARNING_PLAN.md` to `$REPO_ROOT/LEARNING_PLAN.md`. Report the path back to the user, along with a one-line summary like: "Learning plan written for <Author Name> covering <N> rules across <M> warnings."
 
 17. **Slop carve-out check (internal).** Read `${CLAUDE_SKILL_DIR}/references/slop-checks.md`. The file lists a small set of focused checks against AI-slop tropes specific to coaching-artifact prose. Re-read the `LEARNING_PLAN.md` you just wrote and apply each check; if you find any matches, rewrite the offending passages in place and overwrite the file. This is an internal pre-publication scrub: do the check in memory, fix the plan, and do **not** write a separate report file or list the findings to the user. The carve-out is in-skill and focused on purpose: do not depend on or vendor the `ai-slop` plugin, and do not extend the carve-out beyond the cap stated in the file.
+
+18. **Lint and finalize (internal).** Run `python3 ${CLAUDE_SKILL_DIR}/scripts/lint_markdown.py --fix "$REPO_ROOT/LEARNING_PLAN.md"`. If the linter exits non-zero, read its stdout findings (one per line, tab-separated `<file>:<line>\t<rule>\t<message>`), revise the plan in place to address each, and re-run the linter. Repeat at most three iterations; after the third pass proceed regardless of the linter's state. The lint loop is internal quality control — do not mention lint output, rule names, exit codes, or iteration counts in the user-facing summary.
 
 ## Argument handling
 

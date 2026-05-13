@@ -1,3 +1,8 @@
 .code-quality-mentor/
 .DS_Store
 *.swp
+
+# Python bytecode (the vendored tree under skills/scan/scripts/_vendor/
+# is committed; its __pycache__ is regenerated on every Python invocation).
+__pycache__/
+*.py[cod]

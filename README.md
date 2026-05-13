@@ -8,7 +8,7 @@ PMD tells you *what* mechanical issues are in the code. The bundled catalog of a
 
 The plugin provides one slash command:
 
-```
+```text
 /code-quality-mentor:scan
 ```
 
@@ -59,7 +59,7 @@ The slash command calls `check_prereqs.sh` first and prints platform-specific in
 
 In any Claude Code session:
 
-```
+```text
 /plugin marketplace add se-uhd/code-quality-mentor
 /plugin install code-quality-mentor
 ```
@@ -70,7 +70,7 @@ In any Claude Code session:
 
 To pull the latest version of the marketplace and refresh the installed plugin:
 
-```
+```text
 /plugin marketplace update code-quality-mentor
 ```
 
@@ -80,7 +80,7 @@ This re-fetches the marketplace metadata from GitHub. After it completes, restar
 
 `cd` into the Git repository you want to scan, then:
 
-```
+```text
 /code-quality-mentor:scan
 ```
 
@@ -88,7 +88,7 @@ Answer the prompts. When the run finishes, open `LEARNING_PLAN.md` at the repo r
 
 Add the scratch directory to your project's `.gitignore`:
 
-```
+```text
 .code-quality-mentor/
 ```
 
@@ -96,7 +96,7 @@ Add the scratch directory to your project's `.gitignore`:
 
 The layout follows the [Agent Skills specification](https://agentskills.io/specification): each skill is a self-contained folder with `SKILL.md` plus the optional `scripts/`, `references/`, and `assets/` subdirectories.
 
-```
+```text
 plugins/code-quality-mentor/
   commands/scan.md                # slash-command shim that invokes the skill
   skills/scan/
@@ -122,7 +122,7 @@ docs/CATALOG.md                   # maintainer guide for the catalog
 
 ## Tests
 
-```
+```text
 plugins/code-quality-mentor/skills/scan/scripts/tests/run.sh
 ```
 
