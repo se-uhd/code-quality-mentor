@@ -46,32 +46,3 @@ setup() {
   assert_contains "$emails" "bob@example.com"
 }
 
-@test "e2e: PMD + SpotBugs merged pipeline attributes both finding types" {
-  require_tool spotbugs
-  require_tool javac
-
-  # Use the JVM-shaped fixture; compile it so SpotBugs has bytecode.
-  jvm_repo="$BATS_TEST_TMPDIR/jvm-repo"
-  bash "$FIXTURES_DIR/setup_jvm_repo.sh" "$jvm_repo"
-  mkdir -p "$jvm_repo/build/classes/java/main"
-  javac -g -d "$jvm_repo/build/classes/java/main" "$jvm_repo"/src/main/java/Bug.java
-
-  langs=$("$SCRIPTS_DIR/detect_languages.sh" "$jvm_repo")
-  ruleset=$(echo "$langs" | jq -r '.[] | select(.pmd_language_id == "java") | .ruleset // empty')
-  if [ -z "$ruleset" ]; then
-    skip "Linguist did not classify the JVM fixture as Java"
-  fi
-
-  pmd_report=$("$SCRIPTS_DIR/run_pmd.sh" "$jvm_repo" "$ruleset")
-  spotbugs_report=$("$SCRIPTS_DIR/run_spotbugs.sh" "$jvm_repo")
-  merged="$jvm_repo/.code-quality-mentor/findings-report.json"
-  "$SCRIPTS_DIR/merge_reports.sh" "$merged" "$pmd_report" "$spotbugs_report"
-
-  # The merged report must contain at least one SpotBugs bug type.
-  has_spotbugs=$(jq -r '[.files[]?.violations[]?.rule] | any(startswith("EI_") or startswith("ES_") or startswith("OS_") or startswith("NP_"))' "$merged")
-  assert_eq "true" "$has_spotbugs" "merged report has SpotBugs-style rule names"
-
-  blame=$("$SCRIPTS_DIR/blame_warnings.sh" "$jvm_repo" "$merged")
-  alice_rules=$(jq -r '.[] | select(.author_email == "alice@example.com") | .warnings | map(.rule) | sort | join(",")' "$blame")
-  assert_contains "$alice_rules" "EI_EXPOSE_REP"
-}

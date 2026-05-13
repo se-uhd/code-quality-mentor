@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # blame_warnings.sh <repo-root> [findings-report.json]
 #
-# Read a PMD-shape JSON report — produced by PMD, SpotBugs, or the merger of
-# both (default: <repo-root>/.code-quality-mentor/pmd-report.json), attribute
+# Read a PMD-shape JSON report — produced by PMD, the LLM antipattern scan,
+# or the merger of both (default: <repo-root>/.code-quality-mentor/pmd-report.json), attribute
 # each warning's `beginline` to a git-blame author, then aggregate per author.
 # Writes the result to
 #   <repo-root>/.code-quality-mentor/blame-report.json

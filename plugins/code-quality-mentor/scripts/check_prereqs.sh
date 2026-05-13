@@ -5,7 +5,8 @@
 # install hints for anything missing. Exit 0 if all required tools are present,
 # 1 otherwise.
 #
-# Required: java (>=11), pmd (>=7), jq, git, and one of {github-linguist, enry}.
+# Required: pmd (>=7), jq, git, and one of {github-linguist, enry}.
+# Java (>=11) is required transitively as PMD's runtime.
 
 set -euo pipefail
 
@@ -17,7 +18,7 @@ note_missing() {
   missing=1
 }
 
-# --- java ----------------------------------------------------------------
+# --- java (PMD runtime) --------------------------------------------------
 if ! command -v java >/dev/null 2>&1; then
   note_missing "java (>=11, required by PMD 7)" \
     "macOS: 'brew install temurin' or via SDKMAN. Linux: use the distro package or download a JDK from adoptium.net."
@@ -53,12 +54,6 @@ fi
 if ! command -v github-linguist >/dev/null 2>&1 && ! command -v enry >/dev/null 2>&1; then
   note_missing "github-linguist OR enry" \
     "Prefer 'gem install github-linguist' (needs Ruby + libicu). Alternative: 'brew install enry' (single Go binary, no Ruby)."
-fi
-
-# --- spotbugs (required, for Java/Kotlin bytecode analysis) -------------
-if ! command -v spotbugs >/dev/null 2>&1; then
-  note_missing "spotbugs (>=4)" \
-    "macOS: 'brew install spotbugs'. Other platforms: download from https://github.com/spotbugs/spotbugs/releases and add bin/ to PATH."
 fi
 
 if [ "$missing" -ne 0 ]; then
