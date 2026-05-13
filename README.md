@@ -1,8 +1,8 @@
 # code-quality-mentor
 
-A Claude Code plugin that turns PMD and SpotBugs warnings into a personalized learning plan for one developer on a team.
+A Claude Code plugin that turns PMD warnings and an LLM-based antipattern scan into a personalized learning plan for one developer on a team.
 
-PMD already tells you *what* is wrong with the code, and SpotBugs adds bytecode-level bug detection on top for Java and Kotlin. `git blame` already tells you *who* wrote it. This plugin closes the loop: it picks one author, derives their characteristic code quality blind spots from the merged findings on their lines, and writes a tailored `LEARNING_PLAN.md` with concept explanations, refactor sketches of their actual code, and pointers to canonical references.
+PMD tells you *what* mechanical issues are in the code. The bundled catalog of antipatterns and code smells drives an LLM scan that catches design-level problems PMD's rule engine cannot — God classes, feature envy, primitive obsession, temporal coupling, and so on. `git blame` tells you *who* wrote the lines. The plugin closes the loop: it picks one author, derives their characteristic blind spots from the merged findings on their lines, and writes a tailored `LEARNING_PLAN.md` that leads with the underlying design principle and uses the author's actual code as evidence.
 
 ## What it does
 
@@ -16,14 +16,20 @@ The workflow runs end to end on the enclosing git repository:
 
 1. Detects which PMD-supported languages are present, using GitHub Linguist (or `enry`).
 2. Runs `pmd check` with sensible default rulesets for each detected language.
-3. If Java or Kotlin is present, asks whether to run SpotBugs against the existing compiled classes, rebuild first, or skip SpotBugs. When a Maven/Gradle/sbt build descriptor is detected, the rebuild option uses the project's own wrapper (`./mvnw`, `./gradlew`) when present. Existing classes are picked up from `target/classes`, `build/classes/java/main`, `build/classes/kotlin/main`, and similar standard locations.
-4. Merges the PMD and SpotBugs findings into a single report (or uses the PMD report alone when SpotBugs did not run).
-5. Attributes every warning's first line to a `git blame` author.
-6. Asks you to pick one developer from the list, sorted by warning count.
-7. Asks two or three tailoring questions: depth, focus area, and seniority framing.
-8. Writes `LEARNING_PLAN.md` at the repo root: a 3-to-5-minute read covering the developer's top 3 to 5 rules, with refactor sketches drawn from their own flagged code.
+3. Asks whether to run the LLM antipattern scan. When you say yes, Claude reads the bundled catalog (`shared/antipatterns.json`) and looks across the PMD-flagged files (plus a sample of the largest source files) for the design smells PMD does not detect. It emits findings in PMD-shape JSON.
+4. Merges PMD and LLM-scan findings into a single report (or uses PMD alone when you skip the LLM scan).
+5. Attributes every finding's first line to a `git blame` author.
+6. Asks you to pick one developer from the list, sorted by finding count.
+7. Asks three tailoring questions: depth, focus area, and seniority framing.
+8. Writes `LEARNING_PLAN.md` at the repo root: a 3-to-5-minute read covering the developer's top 3 to 5 issues. Each section leads with the underlying design principle (named refactoring, "tell don't ask", "fail fast", and so on), explains why it matters, and uses one verbatim snippet from the developer's flagged code as evidence. The concept paragraph is the longest paragraph — code illustrates the idea, never carries it.
 
 Intermediate JSON reports live under `.code-quality-mentor/`. The plugin never modifies your source code.
+
+## The antipattern catalog
+
+The LLM scan is driven by `plugins/code-quality-mentor/shared/antipatterns.json`, a curated catalog of antipatterns and code smells. Each entry has an id, family (Bloaters, OO Abusers, Change Preventers, Dispensables, Couplers, Architecture), description, concrete detection signals, language-specific notes, named refactoring, and canonical references (book chapters, Fowler bliki pages, papers, talks — every reference carries a resolvable URL).
+
+The catalog ships with the plugin. End users do not edit it; they consume it through `/code-quality-mentor:scan`. Plugin maintainers update it via the script at `plugins/code-quality-mentor/scripts/update_catalog.sh`; see [docs/CATALOG.md](docs/CATALOG.md) for the maintenance workflow.
 
 ## Supported languages
 
@@ -37,14 +43,13 @@ The language-to-ruleset map lives at `plugins/code-quality-mentor/shared/pmd-lan
 
 ## Prerequisites
 
-| Tool                    | Why                                              | Install (macOS)                   |
-| ----------------------- | ------------------------------------------------ | --------------------------------- |
-| `java` (>=11)           | PMD and SpotBugs runtime                         | `brew install temurin`            |
-| `pmd` (>=7)             | Source-level static analyzer                     | `brew install pmd`                |
-| `spotbugs` (>=4)        | Bytecode-level bug detector (Java/Kotlin)        | `brew install spotbugs`           |
-| `jq`                    | JSON manipulation in the helper scripts          | `brew install jq`                 |
-| `git`                   | Repository history and `git blame`               | `xcode-select --install`          |
-| `github-linguist` *or* `enry` | Language detection in the repo             | `gem install github-linguist` *or* `brew install enry` |
+| Tool                          | Why                                       | Install (macOS)                                          |
+| ----------------------------- | ----------------------------------------- | -------------------------------------------------------- |
+| `java` (>=11)                 | PMD runtime                               | `brew install temurin`                                   |
+| `pmd` (>=7)                   | Source-level static analyzer              | `brew install pmd`                                       |
+| `jq`                          | JSON manipulation in the helper scripts   | `brew install jq`                                        |
+| `git`                         | Repository history and `git blame`        | `xcode-select --install`                                 |
+| `github-linguist` *or* `enry` | Language detection in the repo            | `gem install github-linguist` *or* `brew install enry`   |
 
 Contributors who want to run the test suite also need `bats-core` (`brew install bats-core`).
 
@@ -98,13 +103,16 @@ plugins/code-quality-mentor/
     check_prereqs.sh
     detect_languages.sh
     run_pmd.sh
-    find_classes.sh           # SpotBugs: locate compiled bytecode
-    run_spotbugs.sh           # SpotBugs: run on bytecode, delegate parsing
-    spotbugs_xml_to_pmd.sh    # SpotBugs: convert XML output to PMD-shape JSON
-    merge_reports.sh          # combine PMD and SpotBugs findings
+    merge_reports.sh          # combine PMD and LLM-scan findings
     blame_warnings.sh
+    llm_scan_prompt.md        # prompt template for the LLM antipattern scan
+    update_catalog.sh         # maintainer-only catalog tooling
     tests/                    # bats-core test suite (see below)
-  shared/pmd-languages.json   # Linguist language name -> PMD ruleset map
+  shared/
+    pmd-languages.json        # Linguist language name -> PMD ruleset map
+    antipatterns.json         # curated catalog driving the LLM scan
+    antipatterns.schema.json  # JSON Schema for the catalog
+docs/CATALOG.md               # maintainer guide for the catalog
 ```
 
 ## Tests
@@ -115,9 +123,9 @@ plugins/code-quality-mentor/scripts/tests/run.sh
 
 The suite is organized in three layers:
 
-- **Layer 1** (needs only `bats` + `jq`): script logic tests for `detect_languages.sh`, `find_classes.sh`, `merge_reports.sh`, and `spotbugs_xml_to_pmd.sh` (against a captured SpotBugs XML fixture), plus schema validation of `pmd-languages.json`.
+- **Layer 1** (needs only `bats` + `jq`): script logic tests for `detect_languages.sh`, `merge_reports.sh`, `update_catalog.sh`, schema validation of `pmd-languages.json`, and structural checks against `antipatterns.json`.
 - **Layer 2** (needs `git`): `find_repo_root.sh`, `check_prereqs.sh`, and `blame_warnings.sh` against a real synthetic repo.
-- **Layer 3** (needs `java`, `javac`, `pmd`, `spotbugs`, and a Linguist implementation): end-to-end smoke test through the full PMD + SpotBugs pipeline.
+- **Layer 3** (needs `java`, `javac`, `pmd`, and a Linguist implementation): end-to-end smoke test through the PMD + LLM-scan (stubbed) pipeline.
 
 Tests that need a tool not on PATH skip themselves with a notice. The CI workflow under `.github/workflows/test.yml` exercises layers 1+2 in one job and all three layers in a second job.
 

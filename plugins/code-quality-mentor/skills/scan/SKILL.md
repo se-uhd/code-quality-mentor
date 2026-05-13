@@ -1,7 +1,7 @@
 ---
 name: scan
 description: Scan a git repository with PMD plus an LLM-based antipattern scan driven by the bundled catalog, attribute each finding to its git-blame author, ask the user to select one developer, and synthesize a tailored LEARNING_PLAN.md with concept explanations, refactor sketches of the author's actual flagged code, and pointers to canonical references. Use when the user asks to scan a codebase for code-quality issues, build a personalized learning plan from static analysis findings, or coach a specific developer based on their characteristic warnings. Writes intermediate JSON reports under .code-quality-mentor/ and a final LEARNING_PLAN.md at the repo root.
-version: 0.2.0
+version: 0.3.0
 license: MIT
 ---
 
@@ -73,48 +73,45 @@ If anything is missing, the script prints platform-specific install hints and ex
 
 13. **Read the author's flagged code.** For each selected rule, pick 1 or 2 representative warnings, by default the most recent two by file modification time, unless one offers a materially different angle than the other (different pattern, different file type). For each chosen warning, use the `Read` tool with the warning's `line` (and the line range of `beginline` to `endline` when the report provides it) to read the actual source snippet plus a few lines of surrounding context. Quote the snippet verbatim; do not invent code.
 
-14. **Synthesize `LEARNING_PLAN.md`.** Target **600–1200 words total** (a 3–5 minute read). Use this structure:
+14. **Synthesize `LEARNING_PLAN.md`.** Target **600–1200 words total** (a 3–5 minute read). The plan is a coaching artifact, not a lint report. **Concepts come first. Code illustrates the concept — it never carries the explanation by itself.** Use this structure:
 
     ```markdown
     # Learning plan for <Author Name>
 
-    <one-paragraph profile of the patterns observed in this author's warnings, neutral and specific — e.g., "Your warnings cluster around two themes: exception handling (3 occurrences of EmptyCatchBlock) and unused state (2 occurrences of UnusedPrivateField). Both are recoverable with light refactoring habits.">
+    <one-paragraph profile of the patterns observed in this author's warnings — neutral, specific, and themed by *concept*, not by rule name. Example: "Your warnings cluster around two themes: exception handling as control flow (EmptyCatchBlock, AvoidThrowingRawExceptionTypes) and unclear ownership of state (UnusedPrivateField, DataClass). Both come back to the same underlying idea: making the program's intent visible from the code.">
 
-    ## <RuleName 1>
+    ## <RuleName 1> — <one-line conceptual framing, not just the rule name>
 
-    **Concept.** <2–4 sentences explaining what the rule guards against, in plain language.>
+    **What this is really about.** <3–5 sentences explaining the *concept* the rule defends. Name the principle out loud (e.g., "fail fast", "information hiding", "tell, don't ask", "single responsibility", "make illegal states unrepresentable"). Explain *why* the principle exists before talking about the mechanical violation. A reader who has never seen the rule should leave this paragraph understanding the idea.>
 
-    **Why it matters.** <Concrete negative implications — bugs, performance, maintainability, security. Be specific to the rule.>
+    **Why it matters.** <2–4 sentences. Concrete consequences when the principle is broken — surprised debuggers six months later, hidden coupling that ripples on the next refactor, security or performance pitfalls. Be specific, not generic; cite the kind of incident this smell tends to cause.>
 
-    **Idiomatic alternative.** <What to do instead, generically. One short paragraph.>
+    **What good looks like.** <2–4 sentences. Describe the idiomatic shape of code that honors the principle. Name the named refactoring (Extract Method, Replace Conditional with Polymorphism, Introduce Value Object, …). One sentence on what the refactoring buys you conceptually.>
 
-    **In your code.**
+    **In your code.** <One short verbatim snippet, drawn via `Read` from the author's actual flagged file. Two or three lines of context, no more. The snippet is evidence, not the explanation — keep the prose around it focused on *which* aspect of the snippet matches the concept above. A one-line refactored sketch is optional and only worth including when it makes the conceptual point clearer.>
     ```<language>
     // <relative-path>:<line>
     <verbatim snippet>
     ```
-    Refactored:
-    ```<language>
-    <refactored snippet>
-    ```
 
     **Further reading.**
-    - PMD: <verifiable URL of the form https://docs.pmd-code.org/latest/pmd_rules_<lang>_<category>.html#<rulename>>
-    - <Canonical reference: book + chapter, paper title + venue + year, or named talk + speaker. Include a URL only when you are confident it resolves. If only a citation is given, that is fine — readers can locate it.>
+    - <Canonical conceptual reference first: a specific *Refactoring* item, *Effective Java* item, *Clean Code* chapter, a peer-reviewed paper with full title + year, or a named conference talk with speaker. This is what teaches the *idea*.>
+    - <Tool docs second (PMD docs URL for PMD rules, catalog `canonical_references[0]` URL for catalog antipatterns). Tool docs are the lookup, not the lesson.>
 
-    ## <RuleName 2>
+    ## <RuleName 2> — <conceptual framing>
     ...
 
     ## Habits going forward
 
-    - <2–4 short, concrete habits — e.g., "Before committing Java code that touches exception handling, run `pmd check --rulesets category/java/quickstart.xml --dir <changed-files>`.">
-    - <Optional: a pre-commit hook snippet, no more than 6 lines.>
+    - <2–4 short, concrete habits framed as *thinking* habits, not just commands. Example: "Before you write a `try`/`catch`, ask: am I genuinely recovering, or am I hiding a failure? If you cannot answer the first half, let the exception propagate."  A pre-commit snippet is allowed but should not replace the conceptual habit.>
     ```
 
-    Cap each rule section at ~150–220 words. Use exactly one snippet per rule by default; use two only when the second illustrates a materially different angle.
+    Cap each rule section at ~180–240 words. Use exactly one verbatim snippet per rule. **The concept paragraph is the longest paragraph in the section** — if it is shorter than "In your code", the section is upside-down and should be rewritten.
 
 15. **Critical content rules.**
-    - **Use verbatim snippets** from the `Read` tool. Do not invent or paraphrase the author's code.
+    - **Lead with the concept, not the code.** The first paragraph of every rule section explains the underlying principle in plain language; the code snippet appears later, as evidence that the principle was violated *here*. If a reader can skip the code and still understand the lesson, the section is doing its job.
+    - **Name the principle.** Every concept paragraph should name an existing design principle, refactoring, or heuristic — "fail fast", "tell don't ask", "single responsibility", "Extract Method", "Replace Type Code with Subclasses". Catalog entries already carry their `refactoring` field; use it. PMD rules map to the same vocabulary even when the rule name does not.
+    - **Use verbatim snippets** from the `Read` tool. Do not invent or paraphrase the author's code. Keep snippets short — 3 to 8 lines, with one or two lines of surrounding context.
     - **For PMD rules**, construct the docs URL deterministically using the per-language `pmd_docs_base_url` from `../../shared/pmd-languages.json` and the rule name as the anchor (e.g., `https://docs.pmd-code.org/latest/pmd_rules_java_errorprone.html#emptycatchblock`). PMD anchor names are lowercase. If unsure of the exact category for a rule, list the language-level docs URL instead — never fabricate.
     - **For catalog antipatterns**, use the entry's `canonical_references` directly. Every reference in the catalog already carries a URL.
     - **Every rule section must include at least one canonical non-tool reference** in "Further reading" — a specific *Refactoring* / *Effective Java* / *Clean Code* item, a peer-reviewed paper with full title and year, or a named conference talk with speaker and venue. Tool docs alone are not enough. For catalog antipatterns this is automatic (the catalog ships them). For PMD rules, if you genuinely cannot recall a good canonical reference, say so in the plan rather than fabricating one.
@@ -128,11 +125,11 @@ This command takes no positional arguments. It always operates on the enclosing 
 
 ## Failure modes (graceful exits)
 
-- Not in a git repository → stop with a clear message; do not proceed.
-- Missing prerequisite tool → stop with the install hint from `check_prereqs.sh`.
-- No PMD-supported language detected → stop and tell the user; suggest they confirm the file extensions are not being filtered out by `.gitattributes` or vendored-file rules.
-- PMD reports zero violations *and* the LLM scan emits no findings (or was skipped) → congratulate the user and exit cleanly. No `LEARNING_PLAN.md` written.
-- All findings unattributable (e.g., flagged files deleted in HEAD) → stop and tell the user; do not write a plan.
+- Not in a git repository: stop with a clear message; do not proceed.
+- Missing prerequisite tool: stop with the install hint from `check_prereqs.sh`.
+- No PMD-supported language detected: stop and tell the user; suggest they confirm the file extensions are not being filtered out by `.gitattributes` or vendored-file rules.
+- PMD reports zero violations *and* the LLM scan emits no findings (or was skipped): congratulate the user and exit cleanly. No `LEARNING_PLAN.md` written.
+- All findings unattributable (e.g., flagged files deleted in HEAD): stop and tell the user; do not write a plan.
 
 ## Files this skill reads
 

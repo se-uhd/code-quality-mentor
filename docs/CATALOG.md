@@ -49,10 +49,10 @@ When drafting an entry, the most important field is `llm_detection_signals` — 
 
 ## Versioning the catalog
 
-The catalog's own `version` field is independent of the plugin's `plugin.json` version. Bump:
+The catalog's `version` field tracks the same SemVer as `plugin.json` and the scan skill's `SKILL.md` frontmatter. All three move in lockstep on every release so consumers see one number, not three. When you change the catalog:
 
 - **patch** when entries gain new detection signals or canonical references but their `id`/`name`/`family` is unchanged.
 - **minor** when entries are added or renamed (consumers using catalog ids may need to rebind learning-plan templates).
 - **major** when the schema itself changes in a breaking way (consumers must adapt their JSON readers).
 
-The plugin's `pmdVersion: "llm-scan-<catalog.version>"` in the emitted report ties findings back to the catalog version that produced them.
+Bump `plugin.json` and `SKILL.md` to the same number in the same commit. The plugin's `pmdVersion: "llm-scan-<catalog.version>"` in the emitted report carries that number into every finding, so the version is auditable from the scan output without having to inspect the manifest.
