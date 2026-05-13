@@ -1,9 +1,9 @@
 ---
-description: Scan the current git repository with PMD, attribute each warning to a git-blame author, let the user pick one developer, and write a tailored LEARNING_PLAN.md for them.
+description: Scan the current git repository with PMD plus an LLM-based antipattern scan, attribute each finding to a git-blame author, let the user pick one developer, and write a tailored LEARNING_PLAN.md for them.
 ---
 
 Use the `code-quality-mentor:scan` skill.
 
-The skill's full workflow lives in `skills/scan/SKILL.md`. By default it operates on the current working directory's enclosing git repository. The skill is interactive: it asks the user to confirm which languages to scan (when multiple are detected), pick one author from the list of committers whose lines triggered PMD warnings, and supply tailoring preferences (depth, focus area, seniority framing).
+The skill's full workflow lives in `skills/scan/SKILL.md`. By default it operates on the current working directory's enclosing git repository. The skill is interactive: it asks the user to confirm which languages to scan (when multiple are detected), whether to run the LLM antipattern scan (driven by the bundled `shared/antipatterns.json` catalog), pick one author from the list of committers whose lines triggered findings, and supply tailoring preferences (depth, focus area, seniority framing).
 
-The skill writes two intermediate JSON files under `<repo>/.code-quality-mentor/` (`pmd-report.json`, `blame-report.json`) and one final artifact at the repo root: `LEARNING_PLAN.md`. Existing files at those paths are overwritten on each run. The user's source code is not modified.
+The skill writes intermediate JSON files under `<repo>/.code-quality-mentor/` (`pmd-report.json`, `llm-scan-report.json` when the LLM scan runs, `findings-report.json`, `blame-report.json`) and one final artifact at the repo root: `LEARNING_PLAN.md`. Existing files at those paths are overwritten on each run. The user's source code is not modified.

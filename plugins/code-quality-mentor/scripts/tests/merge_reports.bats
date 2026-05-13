@@ -24,13 +24,13 @@ EOF
   cat > "$SB_R" <<'EOF'
 {
   "formatVersion": 0,
-  "pmdVersion": "spotbugs",
+  "pmdVersion": "llm-scan-0.1.0",
   "files": [
     {"filename": "/repo/A.java", "violations": [
-      {"beginline": 5, "endline": 5, "rule": "EI_EXPOSE_REP", "description": "e"}
+      {"beginline": 5, "endline": 5, "rule": "long_method", "ruleset": "Bloaters", "description": "long"}
     ]},
     {"filename": "/repo/B.java", "violations": [
-      {"beginline": 9, "endline": 9, "rule": "ES_COMPARING_STRINGS_WITH_EQ", "description": "s"}
+      {"beginline": 9, "endline": 9, "rule": "feature_envy", "ruleset": "Couplers", "description": "envy"}
     ]}
   ]
 }
@@ -46,10 +46,10 @@ EOF
   assert_eq 2 "$file_count" "file count"
 
   a_rules=$(jq -r '.files[] | select(.filename == "/repo/A.java") | .violations | map(.rule) | sort | join(",")' "$OUT")
-  assert_eq "EI_EXPOSE_REP,UnusedLocalVariable" "$a_rules" "A.java rules"
+  assert_eq "UnusedLocalVariable,long_method" "$a_rules" "A.java rules"
 
   b_rules=$(jq -r '.files[] | select(.filename == "/repo/B.java") | .violations | map(.rule) | join(",")' "$OUT")
-  assert_eq "ES_COMPARING_STRINGS_WITH_EQ" "$b_rules" "B.java rules"
+  assert_eq "feature_envy" "$b_rules" "B.java rules"
 }
 
 @test "merge_reports.sh: works with a single report" {

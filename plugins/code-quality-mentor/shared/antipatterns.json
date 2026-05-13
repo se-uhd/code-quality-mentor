@@ -1,0 +1,1682 @@
+{
+  "version": "0.2.0",
+  "lastUpdated": "2026-05-13",
+  "sources": [
+    {
+      "id": "fowler_refactoring",
+      "title": "Refactoring: Improving the Design of Existing Code (2nd ed.)",
+      "author": "Martin Fowler",
+      "year": 2018,
+      "url": "https://martinfowler.com/books/refactoring.html"
+    },
+    {
+      "id": "fowler_bliki_smells",
+      "title": "CodeSmell (bliki)",
+      "author": "Martin Fowler",
+      "url": "https://martinfowler.com/bliki/CodeSmell.html"
+    },
+    {
+      "id": "refactoring_guru",
+      "title": "Refactoring.Guru — Code Smells",
+      "url": "https://refactoring.guru/refactoring/smells"
+    },
+    {
+      "id": "sourcemaking_smells",
+      "title": "SourceMaking — Code Smells",
+      "url": "https://sourcemaking.com/refactoring/smells"
+    },
+    {
+      "id": "sourcemaking_antipatterns",
+      "title": "SourceMaking — AntiPatterns",
+      "url": "https://sourcemaking.com/antipatterns"
+    },
+    {
+      "id": "detekt_rules",
+      "title": "Detekt — Documentation",
+      "url": "https://detekt.dev/docs/intro"
+    },
+    {
+      "id": "smells_catalog",
+      "title": "Code Smells Catalog (Marcel Jerzyk)",
+      "url": "https://luzkan.github.io/smells/"
+    },
+    {
+      "id": "wake_refactoring_workbook",
+      "title": "Refactoring Workbook",
+      "author": "William C. Wake",
+      "year": 2003,
+      "url": "https://www.oreilly.com/library/view/refactoring-workbook/0321109295/"
+    },
+    {
+      "id": "foote_yoder_big_ball_of_mud",
+      "title": "Big Ball of Mud",
+      "author": "Brian Foote and Joseph Yoder",
+      "year": 1997,
+      "url": "http://www.laputan.org/mud/"
+    },
+    {
+      "id": "brooks_no_silver_bullet",
+      "title": "No Silver Bullet — Essence and Accident in Software Engineering",
+      "author": "Frederick P. Brooks, Jr.",
+      "year": 1986,
+      "url": "https://en.wikipedia.org/wiki/No_Silver_Bullet"
+    },
+    {
+      "id": "knuth_structured_programming_with_goto",
+      "title": "Structured Programming with go to Statements (Computing Surveys)",
+      "author": "Donald E. Knuth",
+      "year": 1974,
+      "url": "https://dl.acm.org/doi/10.1145/356635.356640"
+    },
+    {
+      "id": "mikhajlov_sekerinski_fbc",
+      "title": "A Study of The Fragile Base Class Problem (ECOOP)",
+      "author": "Leonid Mikhajlov and Emil Sekerinski",
+      "year": 1998,
+      "url": "https://link.springer.com/chapter/10.1007/BFb0054099"
+    },
+    {
+      "id": "evans_ddd",
+      "title": "Domain-Driven Design: Tackling Complexity in the Heart of Software",
+      "author": "Eric Evans",
+      "year": 2003,
+      "url": "https://www.informit.com/store/domain-driven-design-tackling-complexity-in-the-heart-9780321125217"
+    },
+    {
+      "id": "feathers_legacy",
+      "title": "Working Effectively with Legacy Code",
+      "author": "Michael C. Feathers",
+      "year": 2004,
+      "url": "https://www.informit.com/store/working-effectively-with-legacy-code-9780131177055"
+    },
+    {
+      "id": "fowler_poeaa",
+      "title": "Patterns of Enterprise Application Architecture",
+      "author": "Martin Fowler",
+      "year": 2002,
+      "url": "https://martinfowler.com/books/eaa.html"
+    },
+    {
+      "id": "karwin_sql_antipatterns",
+      "title": "SQL Antipatterns: Avoiding the Pitfalls of Database Programming",
+      "author": "Bill Karwin",
+      "year": 2010,
+      "url": "https://pragprog.com/titles/bksqla/sql-antipatterns/"
+    },
+    {
+      "id": "ogden_callback_hell",
+      "title": "Callback Hell — A guide to writing asynchronous JavaScript",
+      "author": "Max Ogden",
+      "url": "http://callbackhell.com/"
+    },
+    {
+      "id": "owasp_sql_injection",
+      "title": "OWASP — SQL Injection",
+      "url": "https://owasp.org/www-community/attacks/SQL_Injection"
+    }
+  ],
+  "entries": [
+    {
+      "id": "long_method",
+      "name": "Long Method",
+      "family": "Bloaters",
+      "description": "A method that has accreted multiple responsibilities and exceeds the size where a reader can hold its intent in one pass.",
+      "llm_detection_signals": [
+        "method body > 30 lines excluding comments and blank lines",
+        "internal block comments dividing the body into 'sections'",
+        "multiple distinct return value computations interleaved",
+        "deep nesting (>= 3 levels) within one method"
+      ],
+      "language_notes": {
+        "Kotlin": "Long bodies inside scope functions (let/run/apply/with) count — flag the enclosing function, not the lambda alone.",
+        "Java": "Static utility methods are often the worst offenders; inspect `public static` first.",
+        "Scala": "Long `for`-comprehensions and chained `map`/`flatMap` pipelines hide method length — count the AST, not the line count.",
+        "JavaScript": "Long arrow-function bodies and immediately-invoked function expressions count. Watch for handlers in framework code (`useEffect`, route handlers) that grew over time.",
+        "Apex": "Trigger handler methods routinely become long. Push behavior into service classes and keep handlers as routing.",
+        "Swift": "View-controller methods accumulate over a screen's lifecycle; `viewDidLoad` is the classical offender.",
+        "PLSQL": "Stored procedures that mix validation, transformation, and side-effects are the typical instance. Split into purpose-named procedures and call them in sequence.",
+        "*": "Constructor bodies > 15 lines are a separate, stronger signal."
+      },
+      "refactoring": "Extract Method; Replace Method with Method Object when extracted methods share many parameters; Decompose Conditional when the bulk is branching logic.",
+      "pmd_overlap": ["ExcessiveMethodLength", "CyclomaticComplexity", "NcssCount"],
+      "seeded_from": ["fowler_refactoring", "refactoring_guru"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Refactoring: Improving the Design of Existing Code, 2nd ed.",
+          "author": "Martin Fowler",
+          "section": "ch. 3 \"Bad Smells in Code\" — Long Function",
+          "year": 2018,
+          "url": "https://martinfowler.com/books/refactoring.html"
+        },
+        {
+          "type": "web",
+          "title": "Long Method (refactoring.guru)",
+          "url": "https://refactoring.guru/smells/long-method"
+        }
+      ]
+    },
+    {
+      "id": "large_class",
+      "name": "Large Class",
+      "family": "Bloaters",
+      "description": "A class that has taken on too many responsibilities — too many fields, too many methods, or too many distinct collaborators — and resists understanding as a single concept.",
+      "llm_detection_signals": [
+        "class declares > 15 instance fields",
+        "class declares > 20 public methods",
+        "field names cluster into two or more disjoint conceptual groups",
+        "comments inside the class header announce multiple 'responsibilities'"
+      ],
+      "language_notes": {
+        "Kotlin": "Data classes with > 7 properties are often a Data Clump in disguise; inspect for a missing value object.",
+        "Java": "Manager / Service / Helper suffixes on a >500-line class are a strong signal.",
+        "Scala": "Traits that mix in many concerns produce the same shape; Cake-pattern abuse is the obvious case.",
+        "JavaScript": "ES6 classes accumulate methods over a feature lifecycle; React class components that survived a hooks migration often qualify.",
+        "Apex": "Salesforce controllers and trigger handlers grow without bound. The Trigger Handler pattern (Kevin O'Hara) is the standard cure.",
+        "Swift": "UIKit view controllers are the canonical offender; MVVM and Coordinator patterns extract responsibilities.",
+        "PLSQL": "Packages that group all data access for a large schema usually want to split along subject area."
+      },
+      "refactoring": "Extract Class along the field clusters; Extract Subclass when one cluster is a specialization; Extract Interface when callers use disjoint method subsets.",
+      "pmd_overlap": ["GodClass", "ExcessivePublicCount", "TooManyFields", "TooManyMethods"],
+      "seeded_from": ["fowler_refactoring", "refactoring_guru"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Refactoring: Improving the Design of Existing Code, 2nd ed.",
+          "author": "Martin Fowler",
+          "section": "ch. 3 — Large Class",
+          "year": 2018,
+          "url": "https://martinfowler.com/books/refactoring.html"
+        },
+        {
+          "type": "web",
+          "title": "Large Class (refactoring.guru)",
+          "url": "https://refactoring.guru/smells/large-class"
+        }
+      ]
+    },
+    {
+      "id": "primitive_obsession",
+      "name": "Primitive Obsession",
+      "family": "Bloaters",
+      "description": "Using primitive types (strings, ints, maps) to model concepts that deserve their own type — so validation, formatting, and invariants get scattered across the codebase.",
+      "llm_detection_signals": [
+        "repeated string parameters with names like 'email', 'phone', 'currency'",
+        "validation regex repeated in multiple call sites for the same logical value",
+        "`Map<String, Object>` or generic dict used as a poor man's struct",
+        "pairs of primitives passed together everywhere (e.g., amount + currency code)"
+      ],
+      "language_notes": {
+        "Kotlin": "Prefer `value class` (inline class) for type-safe wrappers over primitives — near-zero runtime cost.",
+        "Java": "Records (Java 16+) make value-object extraction cheap; flag candidates.",
+        "Scala": "AnyVal value classes give zero-runtime-cost wrappers; opaque types (Scala 3) are even cleaner.",
+        "Swift": "Use `struct` with `RawRepresentable` or a dedicated wrapper struct; `typealias` alone is not enough — it still permits assignment between primitives.",
+        "JavaScript": "TypeScript branded types (`type UserId = string & { __brand: 'UserId' }`) carry the discipline at compile time. Plain JS has no zero-cost option; introduce a tiny class.",
+        "Apex": "Custom types are heavyweight; prefer a wrapper class only for values with non-trivial invariants (currency, ID validation).",
+        "PLSQL": "Use `SUBTYPE` declarations with `NOT NULL` constraints inside packages to name the concept and constrain values."
+      },
+      "refactoring": "Replace Data Value with Object; Introduce Parameter Object; Extract Class for clumps; in Kotlin, introduce a `value class`.",
+      "pmd_overlap": [],
+      "seeded_from": ["fowler_refactoring", "refactoring_guru", "sourcemaking_smells"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Refactoring: Improving the Design of Existing Code, 2nd ed.",
+          "author": "Martin Fowler",
+          "section": "ch. 3 — Primitive Obsession",
+          "year": 2018,
+          "url": "https://martinfowler.com/books/refactoring.html"
+        },
+        {
+          "type": "web",
+          "title": "Primitive Obsession (refactoring.guru)",
+          "url": "https://refactoring.guru/smells/primitive-obsession"
+        }
+      ]
+    },
+    {
+      "id": "long_parameter_list",
+      "name": "Long Parameter List",
+      "family": "Bloaters",
+      "description": "A method that takes so many parameters that callers must remember positions and meanings, and changes to its signature ripple to many call sites.",
+      "llm_detection_signals": [
+        "method declares > 4 parameters (3 is the warning band, 5+ is strong)",
+        "parameter clumps repeat across multiple methods of the same class",
+        "boolean flag parameters changing behavior modes",
+        "two or more parameters of the same primitive type next to each other (positional confusion risk)"
+      ],
+      "language_notes": {
+        "Kotlin": "Default + named arguments mitigate the readability cost but not the design smell; still flag clumps."
+      },
+      "refactoring": "Introduce Parameter Object; Preserve Whole Object; Replace Parameter with Method Call; Replace Flag Argument with separate methods.",
+      "pmd_overlap": ["ExcessiveParameterList", "TooManyMethods"],
+      "seeded_from": ["fowler_refactoring", "refactoring_guru"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Refactoring: Improving the Design of Existing Code, 2nd ed.",
+          "author": "Martin Fowler",
+          "section": "ch. 3 — Long Parameter List",
+          "year": 2018,
+          "url": "https://martinfowler.com/books/refactoring.html"
+        },
+        {
+          "type": "web",
+          "title": "Long Parameter List (refactoring.guru)",
+          "url": "https://refactoring.guru/smells/long-parameter-list"
+        }
+      ]
+    },
+    {
+      "id": "data_clumps",
+      "name": "Data Clumps",
+      "family": "Bloaters",
+      "description": "The same group of data items shows up together in many places — method signatures, field declarations, function calls — but has never been promoted to a named type.",
+      "llm_detection_signals": [
+        "the same 3+ parameters appear together in multiple unrelated method signatures",
+        "fields of one class always read or written together",
+        "constructor parameters mirror another class's fields verbatim",
+        "method names imply a composite ('addressLine', 'city', 'zip', 'country' together)"
+      ],
+      "refactoring": "Extract Class for the clump; Introduce Parameter Object at the call sites; Preserve Whole Object when callers already hold the host object.",
+      "pmd_overlap": [],
+      "seeded_from": ["fowler_refactoring", "refactoring_guru", "wake_refactoring_workbook"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Refactoring: Improving the Design of Existing Code, 2nd ed.",
+          "author": "Martin Fowler",
+          "section": "ch. 3 — Data Clumps",
+          "year": 2018,
+          "url": "https://martinfowler.com/books/refactoring.html"
+        },
+        {
+          "type": "web",
+          "title": "Data Clumps (refactoring.guru)",
+          "url": "https://refactoring.guru/smells/data-clumps"
+        }
+      ]
+    },
+    {
+      "id": "switch_statements",
+      "name": "Switch Statements (Type Code)",
+      "family": "OO Abusers",
+      "description": "A switch (or chain of if/else) over a type code, where each branch knows about a different concrete kind. Adding a new kind forces edits everywhere the switch occurs.",
+      "llm_detection_signals": [
+        "switch / when statement branching on an enum or string 'type' field",
+        "the same set of branches recurs in multiple methods of the same class",
+        "default branch throws 'unsupported type' instead of expressing a real default",
+        "fields are conditionally used based on the type code"
+      ],
+      "language_notes": {
+        "Kotlin": "Exhaustive `when` on a sealed class is *not* this smell — that's a closed sum type. Flag `when` on open enums or strings.",
+        "Java": "Pattern matching for switch (Java 21+) on sealed types is fine; flag `switch` on `String`/`int` type codes.",
+        "Scala": "`match` on a sealed trait with exhaustiveness checked by the compiler is fine. Flag `match` on `String` discriminators or on unsealed hierarchies.",
+        "Swift": "`switch` on an `enum` with associated values is fine. Flag `switch` on raw strings or `Any` casts.",
+        "JavaScript": "`switch` on string `type` fields in Redux reducers / discriminated unions in TypeScript can be acceptable if exhaustiveness is checked; otherwise it is this smell.",
+        "Apex": "Apex `switch on` is fine for enums; flag `if/else` ladders branching on a `String` type code.",
+        "PLSQL": "`CASE` on a column that is conceptually a type discriminator is often the right place to introduce a child table or subtype."
+      },
+      "refactoring": "Replace Type Code with Subclasses / State / Strategy; Replace Conditional with Polymorphism.",
+      "pmd_overlap": ["CyclomaticComplexity", "AvoidLiteralsInIfCondition"],
+      "seeded_from": ["fowler_refactoring", "refactoring_guru"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Refactoring: Improving the Design of Existing Code, 2nd ed.",
+          "author": "Martin Fowler",
+          "section": "ch. 3 — Repeated Switches",
+          "year": 2018,
+          "url": "https://martinfowler.com/books/refactoring.html"
+        },
+        {
+          "type": "web",
+          "title": "Switch Statements (refactoring.guru)",
+          "url": "https://refactoring.guru/smells/switch-statements"
+        }
+      ]
+    },
+    {
+      "id": "refused_bequest",
+      "name": "Refused Bequest",
+      "family": "OO Abusers",
+      "description": "A subclass inherits behavior or state it does not want and either overrides it to throw, leaves it broken, or silently ignores it. The inheritance relationship is wrong.",
+      "llm_detection_signals": [
+        "overrides that throw UnsupportedOperationException or return null/empty",
+        "subclass uses only a small subset of the parent's protected API",
+        "Liskov violation: subclass strengthens preconditions or weakens postconditions",
+        "interfaces with optional methods callers must check before invoking"
+      ],
+      "refactoring": "Replace Inheritance with Delegation; Push Down Method / Field to the only subclass that uses it; Extract Interface for the actually-shared subset.",
+      "pmd_overlap": [],
+      "seeded_from": ["fowler_refactoring", "refactoring_guru"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Refactoring: Improving the Design of Existing Code, 2nd ed.",
+          "author": "Martin Fowler",
+          "section": "ch. 3 — Refused Bequest",
+          "year": 2018,
+          "url": "https://martinfowler.com/books/refactoring.html"
+        },
+        {
+          "type": "web",
+          "title": "Refused Bequest (refactoring.guru)",
+          "url": "https://refactoring.guru/smells/refused-bequest"
+        }
+      ]
+    },
+    {
+      "id": "temporary_field",
+      "name": "Temporary Field",
+      "family": "OO Abusers",
+      "description": "A field that is only set and used during one specific operation, sitting null or default the rest of the time, exposing the object to broken invariants.",
+      "llm_detection_signals": [
+        "field is `null` (or `lateinit`/`Optional.empty`) for most of the object's lifetime",
+        "field is read only inside one method (or one method's call tree)",
+        "constructor leaves the field uninitialized, then a setter populates it just before use",
+        "null checks on a field clustered in a single method"
+      ],
+      "language_notes": {
+        "Kotlin": "`lateinit var` and nullable `var` properties used as scratch space are exactly this smell."
+      },
+      "refactoring": "Extract Class to hold the operation and its scratch state; Replace Method with Method Object; Introduce Null Object when the absence is meaningful.",
+      "pmd_overlap": ["NullAssignment"],
+      "seeded_from": ["fowler_refactoring", "refactoring_guru"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Refactoring: Improving the Design of Existing Code, 2nd ed.",
+          "author": "Martin Fowler",
+          "section": "ch. 3 — Temporary Field",
+          "year": 2018,
+          "url": "https://martinfowler.com/books/refactoring.html"
+        },
+        {
+          "type": "web",
+          "title": "Temporary Field (refactoring.guru)",
+          "url": "https://refactoring.guru/smells/temporary-field"
+        }
+      ]
+    },
+    {
+      "id": "divergent_change",
+      "name": "Divergent Change",
+      "family": "Change Preventers",
+      "description": "One class is changed in many different ways for many different reasons — each new feature touches a different cluster of its methods. The class lacks a single axis of change.",
+      "llm_detection_signals": [
+        "git history shows the file edited under many unrelated commit subjects",
+        "methods cluster into groups that never call each other",
+        "imports span unrelated subsystems (persistence + HTTP + formatting)",
+        "the class's name describes a layer rather than a concept ('Manager', 'Helper')"
+      ],
+      "refactoring": "Extract Class along the change axes; Move Method to push behavior toward the data it changes with.",
+      "pmd_overlap": [],
+      "seeded_from": ["fowler_refactoring", "refactoring_guru"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Refactoring: Improving the Design of Existing Code, 2nd ed.",
+          "author": "Martin Fowler",
+          "section": "ch. 3 — Divergent Change",
+          "year": 2018,
+          "url": "https://martinfowler.com/books/refactoring.html"
+        },
+        {
+          "type": "web",
+          "title": "Divergent Change (refactoring.guru)",
+          "url": "https://refactoring.guru/smells/divergent-change"
+        }
+      ]
+    },
+    {
+      "id": "shotgun_surgery",
+      "name": "Shotgun Surgery",
+      "family": "Change Preventers",
+      "description": "One conceptual change forces tiny edits across many classes — each on its own innocuous, but together they fragment the change and make it easy to miss a site.",
+      "llm_detection_signals": [
+        "the same constant or string literal appears in many files",
+        "the same one-line method is implemented in many sibling classes",
+        "PR descriptions repeatedly say 'updated X in N files' for similar X",
+        "a change to one enum value requires editing > 3 files in lockstep"
+      ],
+      "refactoring": "Move Method / Move Field to consolidate the affected logic; Inline Class when a class only delegates; Combine Functions into Class when the change site is naturally a single object.",
+      "pmd_overlap": [],
+      "seeded_from": ["fowler_refactoring", "refactoring_guru"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Refactoring: Improving the Design of Existing Code, 2nd ed.",
+          "author": "Martin Fowler",
+          "section": "ch. 3 — Shotgun Surgery",
+          "year": 2018,
+          "url": "https://martinfowler.com/books/refactoring.html"
+        },
+        {
+          "type": "web",
+          "title": "Shotgun Surgery (refactoring.guru)",
+          "url": "https://refactoring.guru/smells/shotgun-surgery"
+        }
+      ]
+    },
+    {
+      "id": "duplicate_code",
+      "name": "Duplicate Code",
+      "family": "Dispensables",
+      "description": "The same expression, sequence of statements, or algorithm structure appears in more than one place — so bugs and improvements must be made in lockstep across all copies.",
+      "llm_detection_signals": [
+        "two methods with > 6 identical lines (modulo variable names)",
+        "two sibling classes with parallel method bodies",
+        "copy-paste markers: identical comments, identical variable names in unrelated contexts",
+        "near-duplicate switch arms differing only in one literal"
+      ],
+      "refactoring": "Extract Method into a shared helper; Pull Up Method to a common parent; Form Template Method when only steps differ; Substitute Algorithm to converge variants.",
+      "pmd_overlap": [],
+      "seeded_from": ["fowler_refactoring", "refactoring_guru"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Refactoring: Improving the Design of Existing Code, 2nd ed.",
+          "author": "Martin Fowler",
+          "section": "ch. 3 — Duplicated Code",
+          "year": 2018,
+          "url": "https://martinfowler.com/books/refactoring.html"
+        },
+        {
+          "type": "web",
+          "title": "Duplicate Code (refactoring.guru)",
+          "url": "https://refactoring.guru/smells/duplicate-code"
+        }
+      ]
+    },
+    {
+      "id": "speculative_generality",
+      "name": "Speculative Generality",
+      "family": "Dispensables",
+      "description": "Abstractions, hooks, and parameters added 'in case we need them' that no one ever exercises. They obscure the actual flow and lock in design decisions on behalf of imagined callers.",
+      "llm_detection_signals": [
+        "abstract class with exactly one concrete subclass",
+        "interface with exactly one implementation and no test double using a different one",
+        "method parameter that every caller passes the same constant",
+        "type parameter that every use site instantiates with the same type"
+      ],
+      "refactoring": "Collapse Hierarchy; Inline Class; Remove Parameter; Inline Method; Rename to drop the speculative names ('AbstractXXXProvider').",
+      "pmd_overlap": ["UnusedFormalParameter", "AbstractClassWithoutAbstractMethod"],
+      "seeded_from": ["fowler_refactoring", "refactoring_guru"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Refactoring: Improving the Design of Existing Code, 2nd ed.",
+          "author": "Martin Fowler",
+          "section": "ch. 3 — Speculative Generality",
+          "year": 2018,
+          "url": "https://martinfowler.com/books/refactoring.html"
+        },
+        {
+          "type": "web",
+          "title": "Speculative Generality (refactoring.guru)",
+          "url": "https://refactoring.guru/smells/speculative-generality"
+        }
+      ]
+    },
+    {
+      "id": "comments_as_deodorant",
+      "name": "Comments as Deodorant",
+      "family": "Dispensables",
+      "description": "A comment that exists to apologize for code that is hard to read, instead of the code being rewritten to be self-explanatory. The smell is not the comment — it is what the comment is masking.",
+      "llm_detection_signals": [
+        "inline comment explains *what* the next few lines do (rather than *why*)",
+        "comment describes a block as a 'section' — the block wants to be its own method",
+        "TODO / FIXME comments older than the rest of the file's history",
+        "long header comment listing parameter semantics that the names should already convey"
+      ],
+      "refactoring": "Extract Method (let the method name carry the comment's intent); Rename Variable / Method; Introduce Assertion to capture preconditions that comments document.",
+      "pmd_overlap": ["CommentRequired", "CommentSize"],
+      "seeded_from": ["fowler_refactoring", "refactoring_guru"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Refactoring: Improving the Design of Existing Code, 2nd ed.",
+          "author": "Martin Fowler",
+          "section": "ch. 3 — Comments",
+          "year": 2018,
+          "url": "https://martinfowler.com/books/refactoring.html"
+        },
+        {
+          "type": "web",
+          "title": "Comments (refactoring.guru)",
+          "url": "https://refactoring.guru/smells/comments"
+        }
+      ]
+    },
+    {
+      "id": "feature_envy",
+      "name": "Feature Envy",
+      "family": "Couplers",
+      "description": "A method seems more interested in another class than its own — it pulls heavily on a foreign object's data and barely touches its own fields. The behavior wants to move.",
+      "llm_detection_signals": [
+        "a method calls > 3 getters on a single external object",
+        "the method does little with its own `this` state",
+        "method parameter accessed via chained getters (a.b.c.d) then mutated",
+        "comments inside the method describe the *foreign* class's domain, not the host's"
+      ],
+      "refactoring": "Move Method to the envied class; Extract Method then Move; Replace Data Value with Object if the envied data is a primitive cluster.",
+      "pmd_overlap": ["LawOfDemeter"],
+      "seeded_from": ["fowler_refactoring", "refactoring_guru"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Refactoring: Improving the Design of Existing Code, 2nd ed.",
+          "author": "Martin Fowler",
+          "section": "ch. 3 — Feature Envy",
+          "year": 2018,
+          "url": "https://martinfowler.com/books/refactoring.html"
+        },
+        {
+          "type": "web",
+          "title": "Feature Envy (refactoring.guru)",
+          "url": "https://refactoring.guru/smells/feature-envy"
+        }
+      ]
+    },
+    {
+      "id": "message_chains",
+      "name": "Message Chains",
+      "family": "Couplers",
+      "description": "A client navigates a long chain of objects (`a.b().c().d().e()`) to reach the value it needs, coupling itself to the entire intermediate structure.",
+      "llm_detection_signals": [
+        "expression with > 3 chained method calls / property accesses on non-fluent APIs",
+        "the same chain appears in multiple places",
+        "intermediate types of the chain are exposed only to support the chain",
+        "tests have to mock every link of the chain"
+      ],
+      "language_notes": {
+        "Kotlin": "Fluent builder DSLs (e.g., `apply { … }.build()`) are *not* this smell — they are designed for chaining. Flag chains that traverse object graphs."
+      },
+      "refactoring": "Hide Delegate (let the head of the chain expose the value); Extract Method that performs the navigation; Introduce a domain-specific accessor.",
+      "pmd_overlap": ["LawOfDemeter"],
+      "seeded_from": ["fowler_refactoring", "refactoring_guru"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Refactoring: Improving the Design of Existing Code, 2nd ed.",
+          "author": "Martin Fowler",
+          "section": "ch. 3 — Message Chains",
+          "year": 2018,
+          "url": "https://martinfowler.com/books/refactoring.html"
+        },
+        {
+          "type": "web",
+          "title": "Message Chains (refactoring.guru)",
+          "url": "https://refactoring.guru/smells/message-chains"
+        }
+      ]
+    },
+    {
+      "id": "inappropriate_intimacy",
+      "name": "Inappropriate Intimacy",
+      "family": "Couplers",
+      "description": "Two classes know too much about each other's internals — reaching past public boundaries into private fields or protected helpers — so they cannot evolve independently.",
+      "llm_detection_signals": [
+        "two classes call each other's protected or package-private members in both directions",
+        "one class reads or writes another's fields directly (where the language allows it)",
+        "test setup for one class requires constructing or mocking deep state of the other",
+        "renaming a field in class A breaks compilation of class B"
+      ],
+      "refactoring": "Move Method / Move Field to consolidate; Change Bidirectional Association to Unidirectional; Extract Class for the shared surface; Hide Delegate to break the back-reference.",
+      "pmd_overlap": [],
+      "seeded_from": ["fowler_refactoring", "refactoring_guru"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Refactoring: Improving the Design of Existing Code, 2nd ed.",
+          "author": "Martin Fowler",
+          "section": "ch. 3 — Insider Trading",
+          "year": 2018,
+          "url": "https://martinfowler.com/books/refactoring.html"
+        },
+        {
+          "type": "web",
+          "title": "Inappropriate Intimacy (refactoring.guru)",
+          "url": "https://refactoring.guru/smells/inappropriate-intimacy"
+        }
+      ]
+    },
+    {
+      "id": "god_class",
+      "name": "God Class",
+      "family": "Architecture",
+      "description": "A class that has accumulated so much knowledge and behavior that the rest of the system orbits around it. Removing it is risky; touching it is too.",
+      "llm_detection_signals": [
+        "class > 1000 LOC and > 30 public methods",
+        "class is imported by > 20% of the rest of the codebase",
+        "single class accumulates fields representing many disjoint subsystems",
+        "the class name is a layer term ('Manager', 'Controller', 'Engine') with no narrower noun"
+      ],
+      "refactoring": "Identify cohesive method/field clusters; Extract Class repeatedly; introduce intermediate domain types; Replace Procedural Code with Objects.",
+      "pmd_overlap": ["GodClass", "ExcessiveClassLength", "ExcessivePublicCount"],
+      "seeded_from": ["sourcemaking_antipatterns", "refactoring_guru"],
+      "canonical_references": [
+        {
+          "type": "web",
+          "title": "The Blob — God Class (SourceMaking)",
+          "url": "https://sourcemaking.com/antipatterns/the-blob"
+        },
+        {
+          "type": "book",
+          "title": "AntiPatterns: Refactoring Software, Architectures, and Projects in Crisis",
+          "author": "Brown, Malveau, McCormick, Mowbray",
+          "year": 1998,
+          "url": "https://www.wiley.com/en-us/AntiPatterns%3A+Refactoring+Software%2C+Architectures%2C+and+Projects+in+Crisis-p-9780471197133"
+        }
+      ]
+    },
+    {
+      "id": "anemic_domain_model",
+      "name": "Anemic Domain Model",
+      "family": "Architecture",
+      "description": "Domain objects that hold only data, with all behavior pushed into service / manager classes — defeating object-orientation by separating state from the operations that protect its invariants.",
+      "llm_detection_signals": [
+        "entity classes contain only fields, constructors, and getters/setters",
+        "service / manager class methods take an entity as the first argument and mutate it",
+        "invariants are checked in service code rather than by the entity",
+        "tests of business rules instantiate services and pass plain DTOs"
+      ],
+      "language_notes": {
+        "Kotlin": "Data classes are not automatically anemic — flag only when business logic lives in a parallel `*Service` rather than as methods on the data class or extension functions."
+      },
+      "refactoring": "Move Method from service to entity; Encapsulate Field; Introduce Assertion for invariants; promote DTO to a true domain object.",
+      "pmd_overlap": ["DataClass"],
+      "seeded_from": ["fowler_bliki_smells", "evans_ddd"],
+      "canonical_references": [
+        {
+          "type": "web",
+          "title": "AnemicDomainModel (Fowler bliki)",
+          "author": "Martin Fowler",
+          "url": "https://martinfowler.com/bliki/AnemicDomainModel.html"
+        },
+        {
+          "type": "book",
+          "title": "Domain-Driven Design: Tackling Complexity in the Heart of Software",
+          "author": "Eric Evans",
+          "section": "ch. 4 \"Isolating the Domain\"",
+          "year": 2003,
+          "url": "https://www.informit.com/store/domain-driven-design-tackling-complexity-in-the-heart-9780321125217"
+        }
+      ]
+    },
+    {
+      "id": "service_locator_misuse",
+      "name": "Service Locator Misuse",
+      "family": "Architecture",
+      "description": "Components fetch their dependencies from a global registry instead of receiving them — hiding the dependency graph, breaking testability, and tightly coupling the component to the locator.",
+      "llm_detection_signals": [
+        "constructor takes no dependencies; the class calls `Locator.get(...)` or `ServiceLocator.lookup(...)` internally",
+        "static singleton accessed in the middle of business logic",
+        "test setup requires installing a global fake before constructing the class under test",
+        "the same locator key string is referenced in many unrelated files"
+      ],
+      "refactoring": "Introduce constructor injection; Replace static access with parameter passing; for legacy code, Introduce Seam at the locator boundary and migrate site by site.",
+      "pmd_overlap": [],
+      "seeded_from": ["fowler_bliki_smells", "sourcemaking_antipatterns"],
+      "canonical_references": [
+        {
+          "type": "web",
+          "title": "Inversion of Control Containers and the Dependency Injection pattern (Fowler)",
+          "author": "Martin Fowler",
+          "url": "https://martinfowler.com/articles/injection.html"
+        },
+        {
+          "type": "book",
+          "title": "Working Effectively with Legacy Code",
+          "author": "Michael C. Feathers",
+          "section": "ch. 4 \"The Seam Model\"",
+          "year": 2004,
+          "url": "https://www.informit.com/store/working-effectively-with-legacy-code-9780131177055"
+        }
+      ]
+    },
+    {
+      "id": "temporal_coupling",
+      "name": "Temporal Coupling",
+      "family": "Architecture",
+      "description": "An API requires its methods to be called in a particular hidden order — `init()` then `start()` then `stop()` — with no compile-time or type-level check, so callers learn the protocol from runtime failures.",
+      "llm_detection_signals": [
+        "method bodies begin with state guards ('if (!initialized) throw …')",
+        "object exposes both `setX` and `start`/`open`/`begin` methods with implicit ordering",
+        "documentation comments describe the order rather than the type system",
+        "tests have a fixed multi-step setup mirroring the protocol"
+      ],
+      "refactoring": "Replace the staged API with a builder that returns a fully-initialized object; encode states as separate types (typestate); make the constructor accept all required state.",
+      "pmd_overlap": [],
+      "seeded_from": ["sourcemaking_antipatterns", "smells_catalog"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "The Pragmatic Programmer (20th Anniversary ed.)",
+          "author": "Hunt & Thomas",
+          "section": "topic 28 \"Temporal Coupling\"",
+          "year": 2019,
+          "url": "https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/"
+        },
+        {
+          "type": "web",
+          "title": "Temporal Coupling (Mark Seemann)",
+          "url": "https://blog.ploeh.dk/2011/05/24/DesignSmellTemporalCoupling/"
+        }
+      ]
+    },
+    {
+      "id": "mysterious_name",
+      "name": "Mysterious Name",
+      "family": "Dispensables",
+      "description": "A name that does not say what the thing is, what it returns, or what it does — forcing readers to chase definitions and reverse-engineer intent.",
+      "llm_detection_signals": [
+        "single-letter identifiers outside a tight scope (loop index, lambda)",
+        "abbreviations a reader cannot expand from context (`mgr`, `proc`, `tmp2`)",
+        "names that lie: `getX` that also mutates state, `isReady` that throws",
+        "Hungarian notation or type prefixes (`strName`, `iCount`) in a typed language"
+      ],
+      "refactoring": "Rename Variable / Rename Method / Rename Class until the name reveals intent; Change Function Declaration when the truthful name would change the signature.",
+      "pmd_overlap": ["ShortVariable", "ShortMethodName", "ShortClassName"],
+      "seeded_from": ["fowler_refactoring"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Refactoring: Improving the Design of Existing Code, 2nd ed.",
+          "author": "Martin Fowler",
+          "section": "ch. 3 — Mysterious Name",
+          "year": 2018,
+          "url": "https://martinfowler.com/books/refactoring.html"
+        },
+        {
+          "type": "book",
+          "title": "Clean Code: A Handbook of Agile Software Craftsmanship",
+          "author": "Robert C. Martin",
+          "section": "ch. 2 \"Meaningful Names\"",
+          "year": 2008,
+          "url": "https://www.informit.com/store/clean-code-a-handbook-of-agile-software-craftsmanship-9780132350884"
+        }
+      ]
+    },
+    {
+      "id": "middle_man",
+      "name": "Middle Man",
+      "family": "Couplers",
+      "description": "A class whose methods almost all delegate to another object, adding indirection without adding behavior. The wrapper exists for its own sake.",
+      "llm_detection_signals": [
+        "more than half a class's methods are one-line delegations to a single field",
+        "the wrapping class adds no validation, transformation, or policy on the way through",
+        "callers must navigate the wrapper for trivial reasons",
+        "renaming a method on the delegate forces a synchronized rename on the wrapper"
+      ],
+      "refactoring": "Remove Middle Man (let callers talk to the delegate); Inline Class when the wrapper has no remaining purpose; Replace Delegation with Inheritance only when behavior actually extends.",
+      "pmd_overlap": [],
+      "seeded_from": ["fowler_refactoring", "refactoring_guru"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Refactoring: Improving the Design of Existing Code, 2nd ed.",
+          "author": "Martin Fowler",
+          "section": "ch. 3 — Middle Man",
+          "year": 2018,
+          "url": "https://martinfowler.com/books/refactoring.html"
+        },
+        {
+          "type": "web",
+          "title": "Middle Man (refactoring.guru)",
+          "url": "https://refactoring.guru/smells/middle-man"
+        }
+      ]
+    },
+    {
+      "id": "alternative_classes_different_interfaces",
+      "name": "Alternative Classes with Different Interfaces",
+      "family": "OO Abusers",
+      "description": "Two or more classes do conceptually the same job but expose different method names and signatures, so callers must special-case which one they have.",
+      "llm_detection_signals": [
+        "two classes implement similar logic but no common interface unifies them",
+        "callers branch on `instanceof` / `is` checks to decide which method to call",
+        "method names paraphrase each other (`add` vs `insert`, `fetch` vs `load`) on parallel classes",
+        "test fixtures construct one or the other depending on case but never both interchangeably"
+      ],
+      "refactoring": "Rename Method and align signatures; Extract Interface to unify the contract; Move Method to consolidate behavior on a common parent; Form Template Method when only steps differ.",
+      "pmd_overlap": [],
+      "seeded_from": ["fowler_refactoring", "refactoring_guru"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Refactoring: Improving the Design of Existing Code, 2nd ed.",
+          "author": "Martin Fowler",
+          "section": "ch. 3 — Alternative Classes with Different Interfaces",
+          "year": 2018,
+          "url": "https://martinfowler.com/books/refactoring.html"
+        },
+        {
+          "type": "web",
+          "title": "Alternative Classes with Different Interfaces (refactoring.guru)",
+          "url": "https://refactoring.guru/smells/alternative-classes-with-different-interfaces"
+        }
+      ]
+    },
+    {
+      "id": "data_class",
+      "name": "Data Class",
+      "family": "OO Abusers",
+      "description": "A class that holds fields with getters/setters and nothing else — no behavior, no invariants. It is a struct masquerading as an object. Distinct from anemic_domain_model, which is the *system-wide* pattern of data classes plus parallel service classes; this entry flags the individual class.",
+      "llm_detection_signals": [
+        "class contains only fields, a constructor, and accessors",
+        "no method enforces a precondition or computes a derived value",
+        "behavior that 'belongs' to this data lives in a sibling service class",
+        "every read of the class consists of a chain of getters"
+      ],
+      "language_notes": {
+        "Kotlin": "Kotlin `data class` is not automatically a smell — it is a *vocabulary* for value objects. Flag only when business logic that mutates or interprets the data lives in a parallel `*Service`/`*Manager`.",
+        "Java": "A class with only fields + getters + a `toString`/`equals`/`hashCode` is often a value object. Look at the *callers* to decide: are they reaching across the class boundary to act on the data?",
+        "Scala": "Case classes are value-object vocabulary, not a smell. Flag regular classes with only `val`/`var` fields and no methods where business operations live in a separate service.",
+        "Swift": "`struct` types with only stored properties are often appropriate value semantics. The smell is when the operating logic lives in an extension placed in a different module or in a parallel `*Manager`.",
+        "JavaScript": "Plain objects (POJOs) or DTOs are not the smell; the smell is a class whose only role is to hold a few fields when an object literal or `Record` type would do."
+      },
+      "refactoring": "Move Method from the operating service into the data class; Encapsulate Field to hide raw accessors; Introduce Assertion / Replace Constructor with Factory Method for invariants.",
+      "pmd_overlap": ["DataClass"],
+      "seeded_from": ["fowler_refactoring", "refactoring_guru"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Refactoring: Improving the Design of Existing Code, 2nd ed.",
+          "author": "Martin Fowler",
+          "section": "ch. 3 — Data Class",
+          "year": 2018,
+          "url": "https://martinfowler.com/books/refactoring.html"
+        },
+        {
+          "type": "web",
+          "title": "Data Class (refactoring.guru)",
+          "url": "https://refactoring.guru/smells/data-class"
+        }
+      ]
+    },
+    {
+      "id": "lazy_element",
+      "name": "Lazy Element",
+      "family": "Dispensables",
+      "description": "A class, method, or module that does so little it does not earn its keep. The indirection costs more than the structure buys.",
+      "llm_detection_signals": [
+        "class with one field and one method that just forwards to it",
+        "method body is a single statement that could be inlined at every call site",
+        "subclass that overrides nothing and adds nothing",
+        "module / package containing one trivial helper"
+      ],
+      "refactoring": "Inline Function / Inline Class; Collapse Hierarchy when the subclass is empty.",
+      "pmd_overlap": [],
+      "seeded_from": ["fowler_refactoring", "refactoring_guru"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Refactoring: Improving the Design of Existing Code, 2nd ed.",
+          "author": "Martin Fowler",
+          "section": "ch. 3 — Lazy Element",
+          "year": 2018,
+          "url": "https://martinfowler.com/books/refactoring.html"
+        },
+        {
+          "type": "web",
+          "title": "Lazy Class (refactoring.guru)",
+          "url": "https://refactoring.guru/smells/lazy-class"
+        }
+      ]
+    },
+    {
+      "id": "parallel_inheritance_hierarchies",
+      "name": "Parallel Inheritance Hierarchies",
+      "family": "Change Preventers",
+      "description": "Every time a subclass is added to one hierarchy, a matching subclass has to be added to another. The hierarchies drift in lockstep — one logical change becomes two coordinated edits.",
+      "llm_detection_signals": [
+        "two class hierarchies whose subclasses share prefixes or suffixes (`OrderXmlParser` ↔ `OrderXmlValidator`, `EmployeeManager` ↔ `EmployeeForm`)",
+        "tests for one hierarchy always require a matching test in the other",
+        "commits routinely touch both hierarchies together",
+        "documentation describes the parallel structure as a 'pairing'"
+      ],
+      "refactoring": "Move Method / Move Field so one hierarchy can refer to the other instead of mirroring it; Replace Inheritance with Delegation; merge the hierarchies behind a single abstraction.",
+      "pmd_overlap": [],
+      "seeded_from": ["fowler_refactoring", "refactoring_guru"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Refactoring: Improving the Design of Existing Code, 2nd ed.",
+          "author": "Martin Fowler",
+          "section": "ch. 3 — Parallel Inheritance Hierarchies",
+          "year": 2018,
+          "url": "https://martinfowler.com/books/refactoring.html"
+        },
+        {
+          "type": "web",
+          "title": "Parallel Inheritance Hierarchies (refactoring.guru)",
+          "url": "https://refactoring.guru/smells/parallel-inheritance-hierarchies"
+        }
+      ]
+    },
+    {
+      "id": "dead_code",
+      "name": "Dead Code",
+      "family": "Dispensables",
+      "description": "Code that is no longer reachable, or that is reachable but whose result is discarded — kept 'just in case' or because no one is sure who depends on it. It taxes every reader and every refactor with no offsetting value.",
+      "llm_detection_signals": [
+        "private method with no caller in the file or package",
+        "branch guarded by a condition that the surrounding logic guarantees is always true/false",
+        "return value computed but never read at any call site",
+        "TODO/commented-out blocks dated more than a year ago in git"
+      ],
+      "refactoring": "Delete it. Version control remembers; commenting it out does not.",
+      "pmd_overlap": ["UnusedPrivateMethod", "UnusedLocalVariable", "UnusedPrivateField", "UnreachableCode"],
+      "seeded_from": ["fowler_refactoring", "refactoring_guru"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Refactoring: Improving the Design of Existing Code, 2nd ed.",
+          "author": "Martin Fowler",
+          "section": "ch. 3 — Dead Code",
+          "year": 2018,
+          "url": "https://martinfowler.com/books/refactoring.html"
+        },
+        {
+          "type": "web",
+          "title": "Dead Code (refactoring.guru)",
+          "url": "https://refactoring.guru/smells/dead-code"
+        }
+      ]
+    },
+    {
+      "id": "exception_swallowing",
+      "name": "Exception Swallowing",
+      "family": "Dispensables",
+      "description": "A `catch` block consumes an exception without acting on it — no recovery, no rethrow, no log entry that names the cause. Failures disappear and the next observable symptom is far away from the real bug.",
+      "llm_detection_signals": [
+        "empty catch block",
+        "catch block whose only statement logs at debug level or prints a generic message",
+        "catch block that returns null/empty when the caller has no way to distinguish 'absent' from 'failed'",
+        "catch block that catches `Throwable` or the language's broadest exception type"
+      ],
+      "language_notes": {
+        "Kotlin": "Coroutine exception handlers that just log are this smell in disguise. Prefer structured concurrency and `SupervisorJob` boundaries so failures propagate to a meaningful scope.",
+        "Java": "`catch (Exception e) { /* ignore */ }` and `catch (Exception e) { e.printStackTrace(); }` are both forms of swallowing — `printStackTrace` is not recovery.",
+        "Scala": "`Try { ... }.getOrElse(null)` and `Future { ... }.recover { case _ => null }` are the functional-style versions of the same smell.",
+        "Swift": "`try? ...` that discards the error without acting on it; `do { try ... } catch { }` with an empty `catch`.",
+        "JavaScript": "`.catch(() => {})` on a Promise chain; `try { ... } catch (e) {}`; `async` functions that silently turn rejections into resolved `undefined`.",
+        "Apex": "`catch (Exception e) { }` is a Salesforce-specific danger — it hides DML errors that should roll back the transaction. At minimum, `Database.rollback` or rethrow.",
+        "PLSQL": "`WHEN OTHERS THEN NULL` is exactly this smell. At minimum log and re-raise; usually you want a specific named exception."
+      },
+      "refactoring": "Let the exception propagate if you cannot meaningfully recover; rethrow wrapped in a domain exception when recovery happens further up; convert to Result/Either at boundaries.",
+      "pmd_overlap": ["EmptyCatchBlock", "AvoidCatchingGenericException", "AvoidCatchingThrowable"],
+      "seeded_from": ["detekt_rules", "fowler_refactoring"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Effective Java, 3rd ed.",
+          "author": "Joshua Bloch",
+          "section": "Item 77 \"Don't ignore exceptions\"",
+          "year": 2018,
+          "url": "https://www.oreilly.com/library/view/effective-java/9780134686097/"
+        },
+        {
+          "type": "tool_docs",
+          "title": "Detekt — exceptions rules",
+          "url": "https://detekt.dev/docs/rules/exceptions"
+        }
+      ]
+    },
+    {
+      "id": "boat_anchor",
+      "name": "Boat Anchor",
+      "family": "Dispensables",
+      "description": "A piece of code or infrastructure kept around 'in case it is needed someday' that no one currently uses. It weighs every build and every dependency upgrade without paying its passage.",
+      "llm_detection_signals": [
+        "library declared in build files but never imported in source",
+        "feature flag defaulted off for over a year with no recorded turn-on plan",
+        "service / module deployed but receiving no traffic according to git/log evidence",
+        "configuration files for environments that no longer exist"
+      ],
+      "refactoring": "Delete it. If the team is uncertain, agree on a deprecation window (e.g., 30 days), tombstone the entry point, then delete.",
+      "pmd_overlap": [],
+      "seeded_from": ["sourcemaking_antipatterns"],
+      "canonical_references": [
+        {
+          "type": "web",
+          "title": "Boat Anchor (SourceMaking)",
+          "url": "https://sourcemaking.com/antipatterns/boat-anchor"
+        },
+        {
+          "type": "book",
+          "title": "AntiPatterns: Refactoring Software, Architectures, and Projects in Crisis",
+          "author": "Brown, Malveau, McCormick, Mowbray",
+          "year": 1998,
+          "url": "https://www.wiley.com/en-us/AntiPatterns%3A+Refactoring+Software%2C+Architectures%2C+and+Projects+in+Crisis-p-9780471197133"
+        }
+      ]
+    },
+    {
+      "id": "cargo_cult_programming",
+      "name": "Cargo Cult Programming",
+      "family": "Dispensables",
+      "description": "Code that mimics the form of an established pattern without understanding its purpose — ceremonies that conferred benefit somewhere else, reproduced here in contexts where they do nothing or actively harm.",
+      "llm_detection_signals": [
+        "boilerplate that the codebase repeats verbatim without per-context adaptation",
+        "design patterns applied where the problem they solve is not present (e.g., Singleton wrapping a stateless utility)",
+        "annotations / decorators copied from examples but with parameters that do not match the local context",
+        "explanatory comments that quote a tutorial verbatim rather than describe the local intent"
+      ],
+      "refactoring": "Trace the pattern back to its motivating problem; remove the ceremony where the problem is absent; if the pattern is genuinely needed, document the local reason.",
+      "pmd_overlap": [],
+      "seeded_from": ["sourcemaking_antipatterns"],
+      "canonical_references": [
+        {
+          "type": "web",
+          "title": "Cargo cult programming (Wikipedia)",
+          "url": "https://en.wikipedia.org/wiki/Cargo_cult_programming"
+        },
+        {
+          "type": "web",
+          "title": "Cargo Cult Science (Richard Feynman, Caltech commencement 1974)",
+          "author": "Richard P. Feynman",
+          "url": "https://calteches.library.caltech.edu/51/2/CargoCult.htm"
+        }
+      ]
+    },
+    {
+      "id": "magic_numbers",
+      "name": "Magic Numbers and Literals",
+      "family": "Dispensables",
+      "description": "Bare literals embedded in code with no name to carry their meaning. Each occurrence is a tiny piece of undocumented context, and the same value in two places may or may not be 'the same thing'.",
+      "llm_detection_signals": [
+        "numeric literals other than -1, 0, 1, 2 used inside expressions",
+        "the same literal value (e.g., `60`, `1024`, `\"USD\"`) repeated in multiple files",
+        "string literals used as enum-like discriminators in branching",
+        "comparisons against time-unit numbers (3600, 86400) with no constant"
+      ],
+      "refactoring": "Replace Magic Literal with Symbolic Constant; Replace Type Code with Enumeration; group related constants on the type they describe.",
+      "pmd_overlap": ["AvoidLiteralsInIfCondition", "MagicNumber"],
+      "seeded_from": ["sourcemaking_smells", "smells_catalog"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Clean Code: A Handbook of Agile Software Craftsmanship",
+          "author": "Robert C. Martin",
+          "section": "ch. 17 \"Smells and Heuristics\" — G-rules on magic numbers and named constants",
+          "year": 2008,
+          "url": "https://www.informit.com/store/clean-code-a-handbook-of-agile-software-craftsmanship-9780132350884"
+        },
+        {
+          "type": "web",
+          "title": "Magic Number (smells catalog)",
+          "url": "https://luzkan.github.io/smells/magic-number"
+        }
+      ]
+    },
+    {
+      "id": "shared_mutable_state",
+      "name": "Shared Mutable State",
+      "family": "Couplers",
+      "description": "Data that is reachable from many parts of the system and mutable from any of them. Every read becomes a guess about who wrote it last; every write is an invisible influence on distant readers.",
+      "llm_detection_signals": [
+        "global variables / module-level mutables read across many files",
+        "singletons whose state changes during normal operation (not just initialization)",
+        "objects passed by reference and mutated by the receiver without explicit ownership transfer",
+        "static fields written from multiple methods"
+      ],
+      "language_notes": {
+        "Kotlin": "`object` declarations that hold `var` fields are the typical form. Prefer `val` + immutable data classes; if state must change, scope it in a coroutine context with explicit ownership.",
+        "Java": "Static non-final fields mutated outside `<clinit>` are how this smell shows up on the JVM.",
+        "Scala": "Module-level `var` is the smell; prefer `val` with referentially-transparent state transitions, or `Ref`/`AtomicReference` for concurrent state.",
+        "Swift": "Globals and `static var` on types; for shared state, wrap in an actor (Swift 5.5+) so writes are serialized.",
+        "JavaScript": "Module-level `let` exports mutated from other modules; window globals (`window.config = ...`) — both invite invisible coupling. Use module-level `Object.freeze`d singletons or pass state explicitly.",
+        "Apex": "Static variables persisted across DML in a transaction are the JVM-equivalent — they survive across triggers and can leak state between unrelated operations.",
+        "PLSQL": "Package globals (variables declared at package scope but not in any procedure) act as session-scoped mutable state. Use procedure-local variables and pass state through call signatures."
+      },
+      "refactoring": "Change Reference to Value (make the data immutable); Encapsulate Variable behind a method that protects invariants; introduce explicit ownership (one writer) and copy on read.",
+      "pmd_overlap": ["AvoidUsingVolatile", "MutableStaticState"],
+      "seeded_from": ["fowler_refactoring", "fowler_bliki_smells"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Refactoring: Improving the Design of Existing Code, 2nd ed.",
+          "author": "Martin Fowler",
+          "section": "ch. 3 — Mutable Data; Global Data",
+          "year": 2018,
+          "url": "https://martinfowler.com/books/refactoring.html"
+        },
+        {
+          "type": "talk",
+          "title": "The Value of Values (StrangeLoop 2012)",
+          "author": "Rich Hickey",
+          "url": "https://www.infoq.com/presentations/Value-Values/"
+        }
+      ]
+    },
+    {
+      "id": "nullable_abuse",
+      "name": "Nullable Abuse",
+      "family": "Couplers",
+      "description": "Using a nullable / `Optional` / `Maybe` type to represent multiple distinct meanings — 'not set', 'invalid', 'pending', 'error' — collapsed into one absent value. Callers cannot tell the cases apart and must guess.",
+      "llm_detection_signals": [
+        "nullable return type whose null cases the documentation enumerates as multiple meanings",
+        "`!!` (force-unwrap) or `Optional.get()` clusters because the caller 'knows' the value is set",
+        "null checks immediately followed by another null check on the same value (defensive guarding)",
+        "nullable field that is set in the constructor for some constructors and not others"
+      ],
+      "language_notes": {
+        "Kotlin": "Prefer a sealed result type (`sealed class Loaded`, `Pending`, `Failed(reason)`) over `T?` when the absence carries meaning. Avoid `lateinit var` for state that is conditionally present.",
+        "Java": "Avoid `Optional<T>` as a field or method parameter — it is designed for return values only (Bloch, Item 55).",
+        "Scala": "`Option[T]` with multiple meanings collapsed into `None` is the same smell. Use `Either[Error, T]` or a sealed ADT when the absence carries meaning.",
+        "Swift": "Force-unwrap (`!`), implicit-unwrap (`var x: T!`), and `as!` collapse Optional semantics. Use `if let` / `guard let` or a `Result<Success, Failure>`.",
+        "JavaScript": "Mixing `null` and `undefined` for distinct meanings is the JS-flavored version. Adopt one convention; in TypeScript, prefer a discriminated union (`{ kind: 'loaded', data } | { kind: 'pending' } | { kind: 'failed', reason }`)."
+      },
+      "refactoring": "Replace null with a sealed/algebraic type that names each case; Introduce Null Object when the absence has a well-defined default behavior; constrain construction so the field is always set when relevant.",
+      "pmd_overlap": ["NullAssignment", "OptionalField"],
+      "seeded_from": ["detekt_rules", "fowler_refactoring"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Effective Java, 3rd ed.",
+          "author": "Joshua Bloch",
+          "section": "Item 55 \"Return optionals judiciously\"; Item 54 \"Return empty collections or arrays, not nulls\"",
+          "year": 2018,
+          "url": "https://www.oreilly.com/library/view/effective-java/9780134686097/"
+        },
+        {
+          "type": "talk",
+          "title": "Null References: The Billion Dollar Mistake (QCon 2009)",
+          "author": "Tony Hoare",
+          "url": "https://www.infoq.com/presentations/Null-References-The-Billion-Dollar-Mistake-Tony-Hoare/"
+        }
+      ]
+    },
+    {
+      "id": "force_unwrap_misuse",
+      "name": "Force-Unwrap Misuse (Kotlin)",
+      "family": "OO Abusers",
+      "description": "Using Kotlin's `!!` operator (or its equivalents) to assert non-nullability the type system cannot prove. The assertion is a load-bearing comment in code form — when the contract drifts, the failure is a crash, not a type error.",
+      "llm_detection_signals": [
+        "`!!` used on a method parameter, public field, or external API result",
+        "chains of `!!` on the same access path within one function",
+        "`!!` immediately after a `?.let { ... }` or null check (redundant, indicates confusion)",
+        "`!!` in a branch the surrounding code does not guarantee"
+      ],
+      "language_notes": {
+        "Kotlin": "Where this smell lives natively — `!!` is the syntax for overriding the type system. Java's analogue is calling `.get()` on an `Optional` without checking `isPresent`: same shape, same failure mode."
+      },
+      "refactoring": "Replace with safe-call (`?.`) plus an explicit branch for the null case; promote the value's type to non-nullable at construction; introduce a precondition (`requireNotNull` with a message) when the assertion is genuinely a contract.",
+      "pmd_overlap": [],
+      "seeded_from": ["detekt_rules"],
+      "canonical_references": [
+        {
+          "type": "tool_docs",
+          "title": "Detekt — UnsafeCallOnNullableType",
+          "url": "https://detekt.dev/docs/rules/potential-bugs#unsafecallonnullabletype"
+        },
+        {
+          "type": "web",
+          "title": "Kotlin null safety (Kotlin docs)",
+          "url": "https://kotlinlang.org/docs/null-safety.html"
+        }
+      ]
+    },
+    {
+      "id": "runblocking_in_suspend_context",
+      "name": "runBlocking in a Suspend Context (Kotlin)",
+      "family": "Architecture",
+      "description": "Calling `runBlocking` inside a coroutine, a Spring/Ktor handler, or any suspend-aware framework — turning the structured-concurrency contract back into thread blocking and forfeiting the runtime's cancellation and back-pressure machinery.",
+      "llm_detection_signals": [
+        "`runBlocking { ... }` inside a `suspend` function",
+        "`runBlocking` used at HTTP/handler boundaries in Ktor, Spring WebFlux, or coroutine-aware test frameworks",
+        "`Thread.sleep(...)` inside coroutine code where `delay(...)` is available",
+        "blocking I/O calls (`InputStream.read`, JDBC) inside a `suspend` function without `withContext(Dispatchers.IO)`"
+      ],
+      "refactoring": "Make the caller `suspend` and use `coroutineScope`/`withContext`; use `Dispatchers.IO` for genuinely blocking I/O; reserve `runBlocking` for `main()` and tests.",
+      "pmd_overlap": [],
+      "seeded_from": ["detekt_rules"],
+      "canonical_references": [
+        {
+          "type": "tool_docs",
+          "title": "Detekt — coroutines rules (RedundantSuspendModifier, GlobalCoroutineUsage)",
+          "url": "https://detekt.dev/docs/rules/coroutines"
+        },
+        {
+          "type": "web",
+          "title": "The reason to avoid GlobalScope (Medium, 2019)",
+          "author": "Roman Elizarov",
+          "year": 2019,
+          "url": "https://elizarov.medium.com/the-reason-to-avoid-globalscope-835337445abc"
+        }
+      ]
+    },
+    {
+      "id": "lava_flow",
+      "name": "Lava Flow",
+      "family": "Architecture",
+      "description": "Layers of half-finished, undocumented code from past attempts at solving a problem — left in place because removing them is risky and no one fully understands what they do. The build cools around them.",
+      "llm_detection_signals": [
+        "files whose top-of-file comment describes an obsolete approach, alongside files implementing the current approach",
+        "two or three implementations of the same logical operation coexisting, with callers split between them",
+        "config flags whose name implies 'old/new' or 'legacy/current'",
+        "files untouched in years that are still imported by active code"
+      ],
+      "refactoring": "Tracer-bullet the unused branches: instrument the suspected dead layer for 30 days, confirm no callers, then delete. For genuinely-still-used legacy: name the boundary, freeze it, migrate callers methodically.",
+      "pmd_overlap": [],
+      "seeded_from": ["sourcemaking_antipatterns", "feathers_legacy"],
+      "canonical_references": [
+        {
+          "type": "web",
+          "title": "Lava Flow (SourceMaking)",
+          "url": "https://sourcemaking.com/antipatterns/lava-flow"
+        },
+        {
+          "type": "book",
+          "title": "Working Effectively with Legacy Code",
+          "author": "Michael C. Feathers",
+          "section": "ch. 8 \"How Do I Add a Feature?\"; ch. 23 \"How Do I Know That I'm Not Breaking Anything?\"",
+          "year": 2004,
+          "url": "https://www.informit.com/store/working-effectively-with-legacy-code-9780131177055"
+        }
+      ]
+    },
+    {
+      "id": "spaghetti_code",
+      "name": "Spaghetti Code",
+      "family": "Architecture",
+      "description": "Control flow that twists through the codebase with no recognizable structure — methods call each other in cycles, state is mutated in passing, the order of operations is implicit in the order of imports. The path through the program cannot be drawn without crossings.",
+      "llm_detection_signals": [
+        "method calls form long cycles across modules",
+        "control flow depends on side effects in the caller's caller",
+        "shared mutable state is read in one module and written in another with no documented contract",
+        "stepping through a feature requires opening more than five files in parallel"
+      ],
+      "refactoring": "Introduce explicit boundaries: extract pure functions where possible; replace transitive side-effect chains with returned values; introduce a coordinating object that owns the workflow.",
+      "pmd_overlap": [],
+      "seeded_from": ["sourcemaking_antipatterns"],
+      "canonical_references": [
+        {
+          "type": "web",
+          "title": "Spaghetti Code (SourceMaking)",
+          "url": "https://sourcemaking.com/antipatterns/spaghetti-code"
+        },
+        {
+          "type": "paper",
+          "title": "Go To Statement Considered Harmful (CACM)",
+          "author": "Edsger W. Dijkstra",
+          "year": 1968,
+          "url": "https://dl.acm.org/doi/10.1145/362929.362947"
+        }
+      ]
+    },
+    {
+      "id": "big_ball_of_mud",
+      "name": "Big Ball of Mud",
+      "family": "Architecture",
+      "description": "A system whose architecture is whatever happened to be in place when the next feature shipped — no enforced boundaries, no consistent layering, no canonical place for any concept. New work accretes wherever it lands.",
+      "llm_detection_signals": [
+        "no module README that describes the module's responsibility",
+        "imports cross every boundary in both directions (UI -> persistence -> UI)",
+        "the same concept is modeled differently in different parts of the codebase",
+        "new features routinely touch >10 modules and add fresh cross-module dependencies"
+      ],
+      "refactoring": "This is a system-level smell — the refactoring is *strangler-fig migration* (introduce a clean facade for one slice, migrate callers, repeat). Resist the temptation to rewrite. Establish *one* canonical boundary at a time.",
+      "pmd_overlap": [],
+      "seeded_from": ["foote_yoder_big_ball_of_mud"],
+      "canonical_references": [
+        {
+          "type": "paper",
+          "title": "Big Ball of Mud",
+          "author": "Brian Foote and Joseph Yoder",
+          "section": "Pattern Languages of Program Design 4",
+          "year": 1997,
+          "url": "http://www.laputan.org/mud/"
+        },
+        {
+          "type": "web",
+          "title": "StranglerFigApplication (Fowler bliki)",
+          "author": "Martin Fowler",
+          "url": "https://martinfowler.com/bliki/StranglerFigApplication.html"
+        }
+      ]
+    },
+    {
+      "id": "golden_hammer",
+      "name": "Golden Hammer",
+      "family": "Architecture",
+      "description": "A familiar tool, library, or pattern is applied to every problem the team encounters, including the ones it does not fit. Solution-first thinking that ignores whether the problem actually has the shape the tool expects.",
+      "llm_detection_signals": [
+        "one library/framework appears in every module regardless of suitability (an ORM in a streaming pipeline; an actor framework in a CRUD service)",
+        "the same architectural pattern (event sourcing, microservices, message queues) is applied to all subsystems including the simple ones",
+        "decision logs phrase the choice as 'we always use X' rather than 'X fits because Y'",
+        "tutorials and examples in the codebase all originate from the same source"
+      ],
+      "refactoring": "Re-examine the boundary case-by-case: for each module, ask what the *problem* requires and whether the chosen tool's costs (operational, learning, lock-in) match. Permit heterogeneity in tool choice where the problems differ.",
+      "pmd_overlap": [],
+      "seeded_from": ["sourcemaking_antipatterns"],
+      "canonical_references": [
+        {
+          "type": "web",
+          "title": "Golden Hammer (SourceMaking)",
+          "url": "https://sourcemaking.com/antipatterns/golden-hammer"
+        },
+        {
+          "type": "web",
+          "title": "Law of the instrument (Wikipedia) — Maslow's hammer, \"if all you have is a hammer everything looks like a nail\"",
+          "url": "https://en.wikipedia.org/wiki/Law_of_the_instrument"
+        }
+      ]
+    },
+    {
+      "id": "premature_optimization",
+      "name": "Premature Optimization",
+      "family": "Architecture",
+      "description": "Code complexity introduced to make something faster before measurement has shown it is slow — caches, inlining, hand-rolled data structures, unrolled loops — that buys negligible performance and pays a perpetual readability tax.",
+      "llm_detection_signals": [
+        "manual caching layer around a function that has never been profiled",
+        "comments justifying complexity by appeal to performance with no measurement cited",
+        "hand-rolled replacements for standard-library data structures in hot-by-assertion paths",
+        "code structured around micro-benchmarks rather than real workloads"
+      ],
+      "refactoring": "Inline the cache; replace the hand-rolled structure with the library equivalent; add measurement (a profiler run, a benchmark with realistic input) before reintroducing complexity *only where the data shows it pays*.",
+      "pmd_overlap": [],
+      "seeded_from": ["knuth_structured_programming_with_goto"],
+      "canonical_references": [
+        {
+          "type": "paper",
+          "title": "Structured Programming with go to Statements",
+          "author": "Donald E. Knuth",
+          "section": "Section 1, p. 268 (\"premature optimization is the root of all evil\")",
+          "year": 1974,
+          "url": "https://dl.acm.org/doi/10.1145/356635.356640"
+        },
+        {
+          "type": "book",
+          "title": "Effective Java, 3rd ed.",
+          "author": "Joshua Bloch",
+          "section": "Item 67 \"Optimize judiciously\"",
+          "year": 2018,
+          "url": "https://www.oreilly.com/library/view/effective-java/9780134686097/"
+        }
+      ]
+    },
+    {
+      "id": "yo_yo_problem",
+      "name": "Yo-Yo Problem (Deep Inheritance)",
+      "family": "Architecture",
+      "description": "Understanding a single call requires repeatedly traversing up and down a deep inheritance chain — the reader yo-yos between subclass and superclass to assemble the meaning of one method. The class hierarchy becomes a maze the code lives inside.",
+      "llm_detection_signals": [
+        "class hierarchy more than four levels deep",
+        "method behavior is split across `super.x()` calls at most levels",
+        "subclass overrides are needed to understand the base class's intended behavior",
+        "navigating to a method definition requires several jumps in an IDE"
+      ],
+      "refactoring": "Replace Inheritance with Delegation; Collapse Hierarchy where intermediate levels add no behavior; Extract Class for the cross-cutting concerns hiding in the chain.",
+      "pmd_overlap": ["AvoidDeeplyNestedIfStmts"],
+      "seeded_from": ["sourcemaking_antipatterns"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Design Patterns: Elements of Reusable Object-Oriented Software",
+          "author": "Gamma, Helm, Johnson, Vlissides",
+          "section": "Introduction \"Favor object composition over class inheritance\"",
+          "year": 1994,
+          "url": "https://www.informit.com/store/design-patterns-elements-of-reusable-object-oriented-9780201633610"
+        },
+        {
+          "type": "book",
+          "title": "Refactoring: Improving the Design of Existing Code, 2nd ed.",
+          "author": "Martin Fowler",
+          "section": "ch. 12 \"Dealing with Inheritance\"",
+          "year": 2018,
+          "url": "https://martinfowler.com/books/refactoring.html"
+        }
+      ]
+    },
+    {
+      "id": "circular_dependency",
+      "name": "Circular Dependency",
+      "family": "Architecture",
+      "description": "Module A depends on module B and module B depends on module A — directly, or through a chain that returns to its origin. The two modules cannot be reasoned about, built, or tested independently.",
+      "llm_detection_signals": [
+        "import graph contains a cycle between top-level modules / packages",
+        "build system requires both modules to compile in lockstep",
+        "tests for one module pull in the other transitively even for unrelated cases",
+        "package-private types are exposed only to break what would otherwise be a cycle"
+      ],
+      "refactoring": "Apply the Dependency Inversion Principle — introduce an interface in a neutral package that both modules depend on; Move Method / Move Class to relocate the shared concept to a third module; Extract Interface to break the back-edge.",
+      "pmd_overlap": ["CyclomaticComplexity", "CouplingBetweenObjects"],
+      "seeded_from": ["sourcemaking_antipatterns"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Clean Architecture: A Craftsman's Guide to Software Structure and Design",
+          "author": "Robert C. Martin",
+          "section": "ch. 14 \"Component Coupling\" — Stable Dependencies Principle; Acyclic Dependencies Principle",
+          "year": 2017,
+          "url": "https://www.informit.com/store/clean-architecture-a-craftsmans-guide-to-software-structure-9780134494166"
+        },
+        {
+          "type": "web",
+          "title": "Acyclic Dependencies Principle (Robert C. Martin)",
+          "url": "https://en.wikipedia.org/wiki/Acyclic_dependencies_principle"
+        }
+      ]
+    },
+    {
+      "id": "fragile_base_class",
+      "name": "Fragile Base Class",
+      "family": "Architecture",
+      "description": "Innocuous changes to a base class break its subclasses — because the subclasses depend on internal call patterns the base class never promised. The inheritance contract is implicit, so the base class cannot evolve safely.",
+      "llm_detection_signals": [
+        "subclass overrides rely on a specific call order between base-class methods",
+        "base class invokes its own `protected` methods in a pattern subclasses must preserve when overriding",
+        "adding a new method to the base class breaks subclasses by accidentally colliding with theirs",
+        "tests for a subclass repeatedly fail when the base class is refactored without changing its public contract"
+      ],
+      "refactoring": "Mark the base class `final` (or seal it); design for extension via composition or sealed-class strategy callbacks rather than method overrides; document the protected protocol explicitly when extension is intended.",
+      "pmd_overlap": [],
+      "seeded_from": ["mikhajlov_sekerinski_fbc"],
+      "canonical_references": [
+        {
+          "type": "paper",
+          "title": "A Study of The Fragile Base Class Problem",
+          "author": "Leonid Mikhajlov and Emil Sekerinski",
+          "section": "ECOOP '98 Proceedings",
+          "year": 1998,
+          "url": "https://link.springer.com/chapter/10.1007/BFb0054099"
+        },
+        {
+          "type": "book",
+          "title": "Effective Java, 3rd ed.",
+          "author": "Joshua Bloch",
+          "section": "Item 19 \"Design and document for inheritance or else prohibit it\"",
+          "year": 2018,
+          "url": "https://www.oreilly.com/library/view/effective-java/9780134686097/"
+        }
+      ]
+    },
+    {
+      "id": "callback_pyramid",
+      "name": "Callback Pyramid (Callback Hell)",
+      "family": "Dispensables",
+      "description": "Asynchronous code that nests each completion handler inside the previous one, so the visual indent depth tracks the number of awaited operations. Error handling has to be repeated at every level and the control flow becomes impossible to read top-to-bottom.",
+      "llm_detection_signals": [
+        "function declarations indented three or more levels by nested callbacks",
+        "each nested level repeats the same `if (err) return ...` boilerplate",
+        "the same operation is implemented twice — once with callbacks, once with Promises/async — in the same module",
+        "callback parameters named `cb`, `next`, `done` chained through long pipelines"
+      ],
+      "language_notes": {
+        "JavaScript": "Refactor to Promises (`then`/`catch`) or `async`/`await`. `Promise.all` for parallel work; `async`/`await` for sequential.",
+        "TypeScript": "Same as JavaScript — typed callback signatures make the pyramid more readable but no less smelly.",
+        "*": "In any language with async via callbacks (older Node, certain embedded SDKs), the cure is to introduce a continuation/futures abstraction the language supports."
+      },
+      "refactoring": "Replace Callback with Promise/Future; introduce `async`/`await`; Extract Function for each named step so the pipeline reads as a list, not a pyramid.",
+      "pmd_overlap": ["AvoidDeeplyNestedIfStmts"],
+      "seeded_from": ["ogden_callback_hell"],
+      "canonical_references": [
+        {
+          "type": "web",
+          "title": "Callback Hell — A guide to writing asynchronous JavaScript",
+          "author": "Max Ogden",
+          "url": "http://callbackhell.com/"
+        },
+        {
+          "type": "web",
+          "title": "Using promises (MDN)",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises"
+        }
+      ]
+    },
+    {
+      "id": "template_logic_mixing",
+      "name": "Business Logic in Templates",
+      "family": "Couplers",
+      "description": "View templates (JSP, Velocity, Visualforce, XSLT, server-rendered HTML) contain branching, computation, or data access that belongs in the model or controller. The presentation layer becomes a place where business rules live — invisible to type checkers, hard to test, and impossible to reuse without the template.",
+      "llm_detection_signals": [
+        "template has more than a handful of conditional / loop directives, or nested ones",
+        "template imports utility classes or invokes static helpers to compute display values",
+        "template accesses persistence-layer types directly (entity managers, repositories)",
+        "the same domain rule is implemented once in the controller and again in the template (for safety)"
+      ],
+      "language_notes": {
+        "Java Server Pages": "Scriptlets (`<% ... %>`) are exactly this smell. Move logic into a controller or a JSTL-friendly view-model bean; restrict the JSP to tag/EL expressions.",
+        "Velocity Template Language": "Velocity macros that perform business computation belong in a Java helper; the `.vm` should only render.",
+        "Visualforce": "`<apex:variable>` chains computing business values, and `rendered` attributes branching on entity state, are red flags. Move into the controller (or Lightning component).",
+        "XSLT": "Long `<xsl:choose>` ladders that classify domain entities should usually be preceded by an intermediate transformation that *names* the classes.",
+        "HTML": "Inline `<script>` blocks computing display values from globals are the SPA-era version of this smell."
+      },
+      "refactoring": "Introduce a view-model that pre-computes everything the template needs; restrict the template to pure render; Fowler's Template View pattern; for fragments shared across templates, Extract Partial / Tag / Component.",
+      "pmd_overlap": [],
+      "seeded_from": ["fowler_poeaa"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Patterns of Enterprise Application Architecture",
+          "author": "Martin Fowler",
+          "section": "ch. 14 — Template View; Transform View",
+          "year": 2002,
+          "url": "https://martinfowler.com/books/eaa.html"
+        },
+        {
+          "type": "web",
+          "title": "Template View (Fowler PoEAA catalog)",
+          "url": "https://martinfowler.com/eaaCatalog/templateView.html"
+        }
+      ]
+    },
+    {
+      "id": "n_plus_one_query",
+      "name": "N+1 Query",
+      "family": "Architecture",
+      "description": "Code that loads a list of records with one query, then issues one additional query per record to fetch related data — turning what could be a single join into N+1 round-trips. The latency cost is invisible until the list grows.",
+      "llm_detection_signals": [
+        "a loop iterates over a collection of entities and accesses a lazy-loaded relation on each",
+        "ORM `findAll` followed by per-element property access that triggers SQL",
+        "SQL log shows the same parameterized query repeated with different parameter values in tight succession",
+        "manual cursor over a result set that opens a sub-cursor per row"
+      ],
+      "language_notes": {
+        "Java": "Hibernate/JPA: use `JOIN FETCH` or `@EntityGraph` to eager-load the relation. Spring Data JPA: switch to a projection that returns the data in one query.",
+        "Kotlin": "Same as Java; Exposed and Ktorm both support eager loads explicitly.",
+        "Scala": "Slick: use `.join` or `.exists`; avoid `Future.sequence(rows.map { row => slowQuery(row) })` patterns.",
+        "Apex": "SOQL inside a `for` loop violates Salesforce governor limits. Use a single SOQL that includes child relationships and iterate the result.",
+        "PLSQL": "A cursor loop that opens a second cursor per row is the standard PL/SQL form. Rewrite as a join or use `BULK COLLECT`.",
+        "JavaScript": "Sequelize/Prisma: use `include` to eager-load. Drizzle/Knex: rewrite as a single SQL with joins.",
+        "*": "If the language doesn't have an ORM, the smell looks like a loop issuing SQL per element. Cure: one query that returns the joined data."
+      },
+      "refactoring": "Replace the inner loop with a join or batch fetch; in ORM, switch to eager loading for that traversal (use it locally — not as a global default); pre-fetch by id list and assemble in memory.",
+      "pmd_overlap": ["AvoidSoqlInLoops"],
+      "seeded_from": ["fowler_poeaa", "karwin_sql_antipatterns"],
+      "canonical_references": [
+        {
+          "type": "book",
+          "title": "Patterns of Enterprise Application Architecture",
+          "author": "Martin Fowler",
+          "section": "ch. 11 \"Object-Relational Behavioral Patterns\" — Lazy Load",
+          "year": 2002,
+          "url": "https://martinfowler.com/books/eaa.html"
+        },
+        {
+          "type": "book",
+          "title": "SQL Antipatterns: Avoiding the Pitfalls of Database Programming",
+          "author": "Bill Karwin",
+          "year": 2010,
+          "url": "https://pragprog.com/titles/bksqla/sql-antipatterns/"
+        }
+      ]
+    },
+    {
+      "id": "dynamic_sql_concatenation",
+      "name": "Dynamic SQL by String Concatenation",
+      "family": "Architecture",
+      "description": "Assembling SQL by concatenating strings, including user-supplied values, instead of using parameterized queries or bind variables. The shape of the smell is also the shape of the vulnerability — every dynamic literal is a potential injection vector and an obstacle to plan caching.",
+      "llm_detection_signals": [
+        "`'... ' + variable + ' ...'` (or template literal interpolation) producing a SQL string",
+        "string formatters (`String.format`, f-strings) used to embed values into SQL",
+        "user input flowing into a SQL string with no escape / bind step in between",
+        "table or column names interpolated from variables (rarely necessary; suggests poor schema design)"
+      ],
+      "language_notes": {
+        "Java": "Use `PreparedStatement` with `?` placeholders, or JPA/Hibernate's parameterized HQL/JPQL. Never `Statement.executeQuery(\"SELECT ... WHERE x = '\" + input + \"'\")`.",
+        "Kotlin": "Same as Java; Exposed's DSL is parameterized by construction.",
+        "Apex": "Static SOQL is parameterized; `Database.query(...)` with concatenated input is the dangerous form — use bind variables (`:var`) instead.",
+        "PLSQL": "Use `EXECUTE IMMEDIATE ... USING ...` with bind variables; avoid concatenating into a dynamic SQL string.",
+        "JavaScript": "Use parameterized queries with the driver (`pg`, `mysql2`) or an ORM. `db.query(\\`SELECT * FROM users WHERE id = ${id}\\`)` is the smell; `db.query('SELECT * FROM users WHERE id = $1', [id])` is the fix.",
+        "Scala": "Slick's interpolators (`sql\"...\"`) parameterize automatically; raw `s\"SELECT ... ${value}\"` does not — verify which one is in use.",
+        "Visualforce": "Same as Apex — bind variables in inline queries; avoid `Database.query` on untrusted input.",
+        "*": "If your language uses string interpolation for SQL, audit every interpolation point against the OWASP guide."
+      },
+      "refactoring": "Replace string concatenation with prepared statements / bind variables; whitelist table/column names if they genuinely must come from input; introduce a query-builder abstraction that disallows raw concatenation by construction.",
+      "pmd_overlap": ["ApexSOQLInjection"],
+      "seeded_from": ["owasp_sql_injection", "karwin_sql_antipatterns"],
+      "canonical_references": [
+        {
+          "type": "web",
+          "title": "OWASP — SQL Injection",
+          "url": "https://owasp.org/www-community/attacks/SQL_Injection"
+        },
+        {
+          "type": "book",
+          "title": "SQL Antipatterns: Avoiding the Pitfalls of Database Programming",
+          "author": "Bill Karwin",
+          "section": "ch. 21 \"SQL Injection\"",
+          "year": 2010,
+          "url": "https://pragprog.com/titles/bksqla/sql-antipatterns/"
+        }
+      ]
+    },
+    {
+      "id": "accidental_complexity",
+      "name": "Accidental Complexity",
+      "family": "Architecture",
+      "description": "Difficulty that does not come from the problem itself but from the tools, the abstractions, or the historical accidents of the codebase. Brooks's distinction: *essential* complexity is intrinsic to what the program must do; *accidental* complexity is what we added on top.",
+      "llm_detection_signals": [
+        "configuration / glue code that occupies more lines than the domain logic it wires together",
+        "multiple layers of indirection between a UI action and the domain operation it triggers",
+        "the team's onboarding documentation focuses on tooling rather than the domain",
+        "a 'simple change' takes many files because the abstraction overhead is high"
+      ],
+      "refactoring": "Identify which layers carry essential complexity (model the domain) vs. accidental (frameworks, build steps, glue). Collapse accidental layers; expose the essential model. Resist new abstractions whose first justification is 'we might need this'.",
+      "pmd_overlap": [],
+      "seeded_from": ["brooks_no_silver_bullet"],
+      "canonical_references": [
+        {
+          "type": "paper",
+          "title": "No Silver Bullet — Essence and Accident in Software Engineering",
+          "author": "Frederick P. Brooks, Jr.",
+          "section": "IEEE Computer 20(4)",
+          "year": 1987,
+          "url": "https://en.wikipedia.org/wiki/No_Silver_Bullet"
+        },
+        {
+          "type": "paper",
+          "title": "Out of the Tar Pit",
+          "author": "Ben Moseley and Peter Marks",
+          "year": 2006,
+          "url": "https://curtclifton.net/papers/MoseleyMarks06a.pdf"
+        }
+      ]
+    }
+  ]
+}
