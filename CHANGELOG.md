@@ -2,6 +2,12 @@
 
 All notable changes to this plugin are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the plugin uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] — 2026-05-14
+
+### Changed in 0.6.1
+
+- Disable md024 (no-duplicate-heading) in `skills/scan/scripts/lint_markdown.yaml`. The `LEARNING_PLAN.md` schema repeats the five subsection headings (`Concept`, `Why it matters here`, `Refactoring`, `Evidence`, `Further reading`) under every rule, so md024 fires on every well-formed plan.
+
 ## [0.6.0] — 2026-05-14
 
 ### Added in 0.6.0

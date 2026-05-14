@@ -1,7 +1,7 @@
 ---
 name: scan
 description: Scan a git repository with PMD plus an LLM-based antipattern scan driven by the bundled catalog, attribute each finding to its git-blame author, ask the user to select one developer, and synthesize a tailored LEARNING_PLAN.md with concept explanations, refactor sketches of the author's actual flagged code, and pointers to canonical references. Use when the user asks to scan a codebase for code-quality issues, build a personalized learning plan from static analysis findings, or coach a specific developer based on their characteristic warnings. Writes intermediate JSON reports under .code-quality-mentor/ and a final LEARNING_PLAN.md at the repo root.
-version: 0.6.0
+version: 0.6.1
 license: MIT
 ---
 
