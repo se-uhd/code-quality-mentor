@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""lint_markdown.py [--fix] <path>
+"""lint_markdown.py [--fix] [--config PATH] <path>
 
 Lint a Markdown file against the GFM dialect using the vendored PyMarkdown
-tree under `_vendor/`, and apply the project-specific schema check for
-`LEARNING_PLAN.md`.
+tree under `_vendor/`. If a `schema_checks.py` module sits next to this
+script, its `schema_findings(text, path)` function is invoked and its
+findings are merged into the output.
 
 The vendored tree is refreshed by `refresh_vendor.py` (maintainer-only).
 End users never need to install anything; the bundle is self-contained.
@@ -13,8 +14,9 @@ Dialect
 GitHub-Flavored Markdown via PyMarkdown's CommonMark base plus the
 `markdown-tables`, `markdown-task-list-items`, `markdown-strikethrough`,
 `markdown-extended-autolinks`, and `front-matter` extensions. Disabled
-plugins (`md013`, `md033`, `md041`) are noisy or report-template-
-incompatible.
+plugins (`md013` line-length, `md033` no-inline-html, `md041`
+first-line-heading) are noisy or report-template-incompatible and add no
+value to the prose this linter targets.
 
 Pre-pass checks
 ---------------
@@ -25,23 +27,19 @@ on the raw bytes before pymarkdown is invoked:
   unclosed-fence        a fenced code block has no matching closer.
   unclosed-frontmatter  a leading `---` has no matching `---`.
 
-Schema check
-------------
-  rule-section-missing-subsection   `LEARNING_PLAN.md`: a rule section
-                                    (any H2 other than `Profile` or
-                                    `Habits going forward`) is missing one
-                                    of the five required H3 subsections
-                                    (`Concept`, `Why it matters here`,
-                                    `Refactoring`, `Evidence`,
-                                    `Further reading`).
-
-The plan H1 is matched by prefix (`Learning plan for `) since the heading
-interpolates the author's name.
+Schema checks
+-------------
+If `schema_checks.py` is present in this script's directory, it is loaded
+via importlib and its `schema_findings(text, path)` function is called
+with the raw file body and a `pathlib.Path` for the file under lint.
+The function returns a list of `(line_no, rule_id, message)` tuples.
+The optional `SKILL_NAME` module attribute is shown in `--help` output.
 
 CLI
 ---
   python3 lint_markdown.py <path>
   python3 lint_markdown.py --fix <path>
+  python3 lint_markdown.py --config <yaml> <path>
 
 Stdout: one finding per line, tab-separated `<path>:<line>\\t<rule>\\t<message>`.
 Stderr: one-line summary `checked <path>; <N> finding(s)`.
@@ -54,6 +52,7 @@ Exit codes
 """
 import argparse
 import contextlib
+import importlib.util
 import io
 import re
 import runpy
@@ -62,7 +61,8 @@ from pathlib import Path
 
 SCRIPTS_DIR = Path(__file__).resolve().parent
 VENDOR_DIR = SCRIPTS_DIR / "_vendor"
-CONFIG_FILE = SCRIPTS_DIR / "lint_markdown.yaml"
+DEFAULT_CONFIG_FILE = SCRIPTS_DIR / "lint_markdown.yaml"
+SCHEMA_CHECKS_FILE = SCRIPTS_DIR / "schema_checks.py"
 
 if not VENDOR_DIR.is_dir():
     sys.stderr.write(
@@ -73,17 +73,6 @@ if not VENDOR_DIR.is_dir():
 
 sys.path.insert(0, str(VENDOR_DIR))
 
-PLAN_H1_PREFIX = "Learning plan for "
-NON_RULE_H2_BODIES = frozenset({"Profile", "Habits going forward"})
-REQUIRED_SUBSECTIONS = (
-    "Concept",
-    "Why it matters here",
-    "Refactoring",
-    "Evidence",
-    "Further reading",
-)
-
-HEADING_RE = re.compile(r'^(#{1,6})\s+(.*)$')
 FENCE_OPENER_RE = re.compile(r'^(`{3,})')
 FENCE_CLOSER_RE = re.compile(r'^(`{3,})\s*$')
 PYMARKDOWN_LINE_RE = re.compile(
@@ -92,8 +81,23 @@ PYMARKDOWN_LINE_RE = re.compile(
 )
 
 
+def load_schema_checks():
+    """Load the sibling `schema_checks.py`. Return (skill_name, finder) or
+    (None, None) if absent."""
+    if not SCHEMA_CHECKS_FILE.is_file():
+        return None, None
+    spec = importlib.util.spec_from_file_location(
+        "schema_checks", SCHEMA_CHECKS_FILE
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    skill_name = getattr(module, "SKILL_NAME", None)
+    finder = getattr(module, "schema_findings", None)
+    return skill_name, finder
+
+
 def pre_findings(raw_text):
-    """Findings PyMarkdown silently accepts but the bundle should still flag.
+    """Findings PyMarkdown silently accepts but the linter should still flag.
 
     Runs on the raw text (with CR/CRLF preserved) before pymarkdown is
     invoked. Reports CRLF / lone CR once per file, an unclosed fenced code
@@ -148,11 +152,12 @@ def pre_findings(raw_text):
     return findings
 
 
-def run_pymarkdown(subcommand, path):
+def run_pymarkdown(subcommand, path, config):
+    """Invoke the vendored PyMarkdown CLI; return (rc, stdout, stderr)."""
     argv = [
         "pymarkdown",
         "--no-json5",
-        "--config", str(CONFIG_FILE),
+        "--config", str(config),
         "--return-code-scheme", "minimal",
         subcommand, str(path),
     ]
@@ -174,68 +179,8 @@ def run_pymarkdown(subcommand, path):
     return rc, out_buf.getvalue(), err_buf.getvalue()
 
 
-def schema_findings(text):
-    """Apply the LEARNING_PLAN.md schema check."""
-    findings = []
-    lines = text.split('\n')
-    if lines and lines[-1] == '':
-        lines = lines[:-1]
-
-    in_fence = None
-    in_frontmatter = lines and lines[0].strip() == '---'
-    is_plan = False
-    rule_sections = []
-    current_section = None
-
-    for i, line in enumerate(lines, 1):
-        if in_frontmatter:
-            if i > 1 and line.strip() == '---':
-                in_frontmatter = False
-            continue
-        if in_fence is not None:
-            m = FENCE_CLOSER_RE.match(line)
-            if m and len(m.group(1)) >= in_fence:
-                in_fence = None
-            continue
-        m = FENCE_OPENER_RE.match(line)
-        if m:
-            in_fence = len(m.group(1))
-            continue
-
-        hm = HEADING_RE.match(line)
-        if hm:
-            level = len(hm.group(1))
-            body = hm.group(2).rstrip().rstrip('#').rstrip()
-            if level == 1 and not is_plan:
-                if body.startswith(PLAN_H1_PREFIX):
-                    is_plan = True
-            if level <= 2:
-                if current_section is not None:
-                    rule_sections.append(current_section)
-                    current_section = None
-                if level == 2 and body not in NON_RULE_H2_BODIES:
-                    current_section = (i, body, [])
-                continue
-            if level == 3 and current_section is not None:
-                current_section[2].append(body)
-
-    if current_section is not None:
-        rule_sections.append(current_section)
-
-    if is_plan:
-        for header_line, _body, subsections in rule_sections:
-            present = set(subsections)
-            for required in REQUIRED_SUBSECTIONS:
-                if required not in present:
-                    findings.append((
-                        header_line, 'rule-section-missing-subsection',
-                        f'rule section is missing `### {required}` subsection',
-                    ))
-
-    return findings
-
-
 def parse_pymarkdown_stdout(stdout):
+    """Parse pymarkdown's `<path>:<line>:<col>: <rule>: <message>` lines."""
     findings = []
     for raw in stdout.splitlines():
         m = PYMARKDOWN_LINE_RE.match(raw.rstrip())
@@ -250,14 +195,33 @@ def parse_pymarkdown_stdout(stdout):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description=("Lint a Markdown file via the vendored PyMarkdown "
-                     "tree plus the code-quality-mentor schema check."),
+    skill_name, schema_findings = load_schema_checks()
+    description = (
+        f"Lint a Markdown file via the vendored PyMarkdown tree"
+        f"{' plus the ' + skill_name + ' schema checks' if skill_name else ''}."
     )
+    parser = argparse.ArgumentParser(description=description)
     parser.add_argument('path', help='Markdown file to check')
     parser.add_argument('--fix', action='store_true',
                         help='apply auto-fixable rules in place, then re-check')
+    parser.add_argument('--config', metavar='PATH',
+                        help=('PyMarkdown config (defaults to '
+                              'lint_markdown.yaml next to this script)'))
     args = parser.parse_args()
+
+    config = Path(args.config) if args.config else DEFAULT_CONFIG_FILE
+    if not config.is_file():
+        if args.config:
+            sys.stderr.write(
+                f"lint_markdown.py: --config path not found: {config}\n"
+            )
+        else:
+            sys.stderr.write(
+                f"lint_markdown.py: no PyMarkdown config at {config}\n"
+                f"create a lint_markdown.yaml next to this script or "
+                f"pass --config <path>\n"
+            )
+        sys.exit(2)
 
     p = Path(args.path)
     try:
@@ -269,7 +233,7 @@ def main():
         sys.exit(2)
 
     if args.fix:
-        rc_fix, _, _ = run_pymarkdown('fix', p)
+        rc_fix, _, _ = run_pymarkdown('fix', p, config)
         if rc_fix not in (0, 3):
             sys.stderr.write(
                 f"lint_markdown.py: pymarkdown fix exited {rc_fix}\n"
@@ -282,7 +246,7 @@ def main():
             )
             sys.exit(2)
 
-    rc_scan, stdout, stderr = run_pymarkdown('scan', p)
+    rc_scan, stdout, stderr = run_pymarkdown('scan', p, config)
     if rc_scan not in (0, 1):
         sys.stderr.write(
             f"lint_markdown.py: pymarkdown scan exited {rc_scan}\n{stderr}\n"
@@ -291,7 +255,8 @@ def main():
 
     findings = pre_findings(raw)
     findings.extend(parse_pymarkdown_stdout(stdout))
-    findings.extend(schema_findings(raw))
+    if schema_findings is not None:
+        findings.extend(schema_findings(raw, p))
     findings.sort()
 
     for line_no, rule, message in findings:
