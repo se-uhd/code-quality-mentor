@@ -1,6 +1,6 @@
 {
   "name": "code-quality-mentor",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "Turn code-quality findings into a personalized learning plan. The /code-quality-mentor:scan command runs PMD plus a catalog-driven LLM antipattern scan across a Git repository, attributes each finding to its author via git blame, lets you pick one developer, and synthesizes a focused LEARNING_PLAN.md that leads with the underlying design principle and uses the author's actual flagged code as evidence.",
   "license": "MIT",
   "author": {

@@ -2,6 +2,12 @@
 
 All notable changes to this plugin are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the plugin uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.3] — 2026-06-11
+
+### Changed in 0.6.3
+
+- Synced the vendored PyMarkdown linter to pymarkdown-skill 0.2.2. `lint_markdown.py` now runs PyMarkdown under the `explicit` return-code scheme (a scan system error, or a file PyMarkdown refuses to scan, exits 2 instead of being reported clean), the pre-pass recognizes tilde and indented fences and follows the config's front-matter settings, and `check_baseline.py`/`refresh_vendor.py`/the sync tooling carry the accompanying robustness fixes. Also corrects the `skills/scan/SKILL.md` version field, which was left at 0.6.1 in the 0.6.2 release.
+
 ## [0.6.1] — 2026-05-14
 
 ### Changed in 0.6.1
