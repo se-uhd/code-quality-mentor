@@ -12,57 +12,57 @@ All notable changes to this plugin are documented here. The format follows [Keep
 
 ### Changed in 0.6.3
 
-- Synced the vendored PyMarkdown linter to pymarkdown-skill 0.2.2. `lint_markdown.py` now runs PyMarkdown under the `explicit` return-code scheme (a scan system error, or a file PyMarkdown refuses to scan, exits 2 instead of being reported clean), the pre-pass recognizes tilde and indented fences and follows the config's front-matter settings, and `check_baseline.py`/`refresh_vendor.py`/the sync tooling carry the accompanying robustness fixes. Also corrects the `skills/scan/SKILL.md` version field, which was left at 0.6.1 in the 0.6.2 release.
+- Synced the vendored PyMarkdown linter to pymarkdown-skill 0.2.2, so `lint_markdown.py` no longer reports a file as clean when PyMarkdown cannot scan it. Also corrected the `skills/scan/SKILL.md` version field, which the 0.6.2 release left at 0.6.1.
 
 ## [0.6.1] — 2026-05-14
 
 ### Changed in 0.6.1
 
-- Disable md024 (no-duplicate-heading) in `skills/scan/scripts/lint_markdown.yaml`. The `LEARNING_PLAN.md` schema repeats the five subsection headings (`Concept`, `Why it matters here`, `Refactoring`, `Evidence`, `Further reading`) under every rule, so md024 fires on every well-formed plan.
+- Disabled md024 (no-duplicate-heading) in `skills/scan/scripts/lint_markdown.yaml`. The rule flagged every well-formed `LEARNING_PLAN.md`, because the plan schema repeats the same subsection headings under every rule.
 
 ## [0.6.0] — 2026-05-14
 
 ### Added in 0.6.0
 
-- Vendored PyMarkdown (pure-Python, ~4.5 MB) under `skills/scan/scripts/_vendor/` with a `lint_markdown.py` wrapper and `refresh_vendor.py` maintainer script. `pyjson5` is replaced by a stdlib shim because PyMarkdown is invoked with `--no-json5`. The wrapper applies a pre-pass for CR/CRLF, unclosed fences, and unclosed frontmatter (rules PyMarkdown silently accepts) plus a `LEARNING_PLAN.md` schema check that requires the five named subsections (`Concept`, `Why it matters here`, `Refactoring`, `Evidence`, `Further reading`) under every rule heading.
-- New workflow step 18 in `scan` skill: lint the freshly written `LEARNING_PLAN.md` with `--fix` and a three-iteration revise loop. Internal quality control; not surfaced to the user.
-- Smoke tests at `skills/scan/scripts/tests/run_lint_smoke.py` covering vendored-tree load, pre-pass rules, schema rule, and `--fix`-mode normalization. CI runs them in both the light and full jobs.
+- Vendored PyMarkdown (pure-Python, ~4.5 MB) under `skills/scan/scripts/_vendor/`, with a `lint_markdown.py` wrapper and a `refresh_vendor.py` maintainer script. The wrapper also flags CR/CRLF, unclosed fences, and unclosed frontmatter, which PyMarkdown accepts silently, and requires the five subsections `Concept`, `Why it matters here`, `Refactoring`, `Evidence`, and `Further reading` under every rule heading of `LEARNING_PLAN.md`.
+- New workflow step 18 in the `scan` skill lints the freshly written `LEARNING_PLAN.md` with `--fix` and a three-iteration revise loop. This internal quality control is not shown to the user.
+- Smoke tests for the linter at `skills/scan/scripts/tests/run_lint_smoke.py`, run in both the light and full CI jobs.
 
 ### Changed in 0.6.0
 
-- `SKILL.md` step 14: tightened the Evidence-fence directive so the model always tags the code-block language (avoids an md040 lint iteration).
+- `SKILL.md` step 14 now requires a language tag on every Evidence code block, which avoids an md040 lint iteration.
 - README, SKILL.md, CHANGELOG, and the two `references/` files cleaned up to satisfy the new linter (fence language tags, blank-line spacing around headings and lists).
 
 ## [0.5.0] — 2026-05-13
 
 ### Changed
 
-- **Layout now follows the [Agent Skills specification](https://agentskills.io/specification).** The plugin-level `scripts/` and `shared/` directories have been moved inside the skill folder, using the canonical names from the spec:
-  - `scripts/*.sh` → `skills/scan/scripts/`
-  - `shared/pmd-languages.json`, `shared/antipatterns.json`, `shared/antipatterns.schema.json` → `skills/scan/assets/`
-  - `shared/llm_scan_prompt.md`, `shared/slop-checks.md` → `skills/scan/references/`
-  - `scripts/tests/` → `skills/scan/scripts/tests/`
-- All path references updated in `SKILL.md`, `scripts/*.sh`, `commands/scan.md`, the bats test suite, `README.md`, and `docs/CATALOG.md`. The 56-test bats suite passes against the new layout.
-- `SKILL.md` paths now use `${CLAUDE_SKILL_DIR}/{scripts,assets,references}/...` (one level deep from the skill root) instead of `${CLAUDE_SKILL_DIR}/../../{scripts,shared}/...`.
+- The layout now follows the [Agent Skills specification](https://agentskills.io/specification). The plugin-level `scripts/` and `shared/` directories moved inside the skill folder under the canonical names from the spec:
+  - `scripts/*.sh` -> `skills/scan/scripts/`
+  - `shared/pmd-languages.json`, `shared/antipatterns.json`, `shared/antipatterns.schema.json` -> `skills/scan/assets/`
+  - `shared/llm_scan_prompt.md`, `shared/slop-checks.md` -> `skills/scan/references/`
+  - `scripts/tests/` -> `skills/scan/scripts/tests/`
+- Updated all path references in `SKILL.md`, `scripts/*.sh`, `commands/scan.md`, the bats test suite, `README.md`, and `docs/CATALOG.md`.
+- `SKILL.md` paths now use `${CLAUDE_SKILL_DIR}/{scripts,assets,references}/...` instead of `${CLAUDE_SKILL_DIR}/../../{scripts,shared}/...`.
 
 ### Migration
 
 - Existing scripts that hard-coded `plugins/code-quality-mentor/shared/...` or `plugins/code-quality-mentor/scripts/...` must update to the new paths.
-- The `$id` URL in `antipatterns.schema.json` changed accordingly; no consumer reads it programmatically inside this repo.
+- The `$id` URL in `antipatterns.schema.json` changed accordingly. No consumer in this repo reads it programmatically.
 
 ## [0.4.0] — 2026-05-13
 
 ### Added
 
-- `shared/slop-checks.md`: a focused carve-out of AI-slop tropes specific to coaching-artifact prose (anti-copula, invented concept labels, em-dash budget, anthropomorphizing, grounded references, no editorial subtitles on rule headings, no bold-first paragraph leads in prose subsections, proper markdown links). Capped at ~15 entries. The carve-out is in-skill; the `ai-slop` plugin is not a dependency.
-- New workflow step in `scan` skill (step 17): internal "Slop carve-out check" reads `shared/slop-checks.md`, re-reads the just-written `LEARNING_PLAN.md`, and fixes matches in place. The check is an internal pre-publication scrub — no separate report file is written and findings are not surfaced to the user.
+- `shared/slop-checks.md`: a carve-out of up to ~15 AI-slop tropes specific to coaching-artifact prose, such as invented concept labels and anthropomorphizing. It is part of the skill and does not require the `ai-slop` plugin.
+- New workflow step 17 in the `scan` skill, the internal "Slop carve-out check", re-reads the just-written `LEARNING_PLAN.md` and fixes matches from `shared/slop-checks.md` in place. It writes no report file and does not show findings to the user.
 
 ### Changed in 0.4.0
 
-- `LEARNING_PLAN.md` template (step 14) is now structured rather than free-form: `## <rule_id>` heading (no editorial subtitle), metadata block with named fields (`Family`, `Source`, `Occurrences`, `Locations`), four named prose subsections (`Concept`, `Why it matters here`, `Refactoring`, `Evidence`), and `Further reading` with paraphrase-required entries (2–4 sentence excerpts that say *what is in there*). Downstream parsers can split on the headings and field markers.
-- Word target raised from 600–1200 words to **1200–2000 words** total, with each rule section targeting 300–450 words.
+- The `LEARNING_PLAN.md` template (step 14) is now structured instead of free-form, so downstream parsers can split on its headings and field markers. Each rule section has a `## <rule_id>` heading without an editorial subtitle; a metadata block with the fields `Family`, `Source`, `Occurrences`, and `Locations`; the prose subsections `Concept`, `Why it matters here`, `Refactoring`, and `Evidence`; and `Further reading` entries that must each paraphrase what the linked resource contains in 2–4 sentences.
+- Raised the total word target from 600–1200 to 1200–2000 words, with 300–450 words per rule section.
 - URLs in the plan must use `[title](url)` markdown syntax. Raw URLs, bolded URLs (`**https://...**`), and angle-bracket links are disallowed.
-- `.claude-plugin/marketplace.json` plugin version caught up from 0.2.0 to 0.4.0; the 0.3.0 release shipped a stale marketplace entry.
+- Updated the plugin version in `.claude-plugin/marketplace.json` from 0.2.0 to 0.4.0, because the 0.3.0 release shipped a stale marketplace entry.
 
 ## [0.3.0]
 
