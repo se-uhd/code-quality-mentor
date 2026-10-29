@@ -2,6 +2,12 @@
 
 All notable changes to this plugin are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the plugin uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.4] — 2026-10-29
+
+### Changed in 0.6.4
+
+- Synced the vendored PyMarkdown linter to pymarkdown-skill 0.3.0 (PyMarkdown 0.9.40).
+
 ## [0.6.3] — 2026-06-11
 
 ### Changed in 0.6.3
