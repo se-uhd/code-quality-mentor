@@ -152,4 +152,4 @@ A separate Python smoke test at `plugins/code-quality-mentor/skills/scan/scripts
 
 First-party content is MIT-licensed. See [LICENSE](LICENSE).
 
-Third-party software bundled under `plugins/code-quality-mentor/skills/scan/scripts/_vendor/` is distributed verbatim under its own licenses (MIT, BSD-3-Clause, Apache-2.0, PSF-2.0). See [`plugins/code-quality-mentor/skills/scan/scripts/_vendor/NOTICE`](plugins/code-quality-mentor/skills/scan/scripts/_vendor/NOTICE) for per-package attribution and full license texts.
+Third-party software bundled under `plugins/code-quality-mentor/skills/scan/scripts/_vendor/` is distributed verbatim under its own licenses (MIT, BSD-3-Clause, PSF-2.0). See [`plugins/code-quality-mentor/skills/scan/scripts/_vendor/NOTICE`](plugins/code-quality-mentor/skills/scan/scripts/_vendor/NOTICE) for per-package attribution and full license texts.
